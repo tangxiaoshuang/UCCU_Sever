@@ -93,8 +93,11 @@ public class AioModule {
     }
     public void addSession(AioSession session)
     {
-        if(!sessionsMap.containsKey(session.getRemoteSocketAddress()))
-            sessionsMap.put(session.getRemoteSocketAddress(), session);
+        synchronized(sessionsMap)
+        {
+            if(!sessionsMap.containsKey(session.getRemoteSocketAddress()))
+                sessionsMap.put(session.getRemoteSocketAddress(), session);
+        }
     }
     private final class AcceptCompletionHandler implements CompletionHandler<AsynchronousSocketChannel, AioModule>
     {
