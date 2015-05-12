@@ -10,6 +10,5 @@ package uccu_sever;
  * @author Xiaoshuang
  */
 public class Sever {
-    int i = 0;
-    int j = 1;
+    
 }
