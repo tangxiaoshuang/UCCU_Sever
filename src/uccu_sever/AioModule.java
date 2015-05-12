@@ -107,6 +107,7 @@ public class AioModule {
         }
         public void completed(AsynchronousSocketChannel socketChannel, AioModule aio)
         {
+            aio.started = false;
             try {
                 System.out.println("Accept from "+ socketChannel.getRemoteAddress());
                 socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
@@ -132,6 +133,7 @@ public class AioModule {
         }
         public void failed(Throwable exc, AioModule aio)
         {
+           aio.started = false;
            exc.printStackTrace();
            asyncAccept();
         }
@@ -180,6 +182,7 @@ public class AioModule {
         }
         public void failed(Throwable exc, AioSession session)
         {
+            System.out.println("Read Failed!");
             exc.printStackTrace();
             session.close();
         }
