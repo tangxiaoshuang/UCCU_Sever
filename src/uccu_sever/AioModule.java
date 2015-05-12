@@ -64,7 +64,11 @@ public class AioModule {
             asyncServerSocketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
             asyncServerSocketChannel.setOption(StandardSocketOptions.SO_RCVBUF, 16 * 1024);
             if(port >= 0)
+            {
                 asyncServerSocketChannel.bind(new InetSocketAddress(hostName, port), 100);
+                System.out.println("Start listening at " + hostName + ": " + port);
+            }
+                
         } catch (Exception e) {
             e.printStackTrace();
         }
