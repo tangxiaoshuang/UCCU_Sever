@@ -15,7 +15,7 @@ import java.util.Set;
  * @author xiaoshuang
  */
 
-public class GameServer implements Decoder, Register{
+public class GameServer implements Decoder, Register, Reaper{
     private Set<AioSession> gates; 
     private AioSession database;
     private AioModule aio;
@@ -37,7 +37,7 @@ public class GameServer implements Decoder, Register{
     public void init(AioModule a, String DBHost, int DBPort)
     {
         aio = a;
-        database = aio.connect(DBHost, DBPort, new DatabaseDecoder());
+        database = aio.connect(DBHost, DBPort, new DatabaseDecoder(), new DatabaseReaper());
         ByteBuffer msg = ByteBuffer.allocate(8);
         msg.putInt(12345);
         msg.flip();
@@ -73,6 +73,15 @@ public class GameServer implements Decoder, Register{
                     aio.asyncAccept();
                     break;
             }
+        }
+    }
+    
+    class DatabaseReaper implements Reaper
+    {
+        @Override
+        public void reap(AioSession session)
+        {
+            System.out.println("Session " + session.getRemoteSocketAddress() + " has disconnected!");
         }
     }
     
@@ -180,5 +189,9 @@ public class GameServer implements Decoder, Register{
         gates.add(session);
         return true;
     }
-    
+    @Override
+    public void reap(AioSession session)
+    {
+        System.out.println("Session " + session.getRemoteSocketAddress() + " has disconnected!");
+    }
 }

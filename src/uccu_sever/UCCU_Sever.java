@@ -23,13 +23,14 @@ public class UCCU_Sever {
         
         
         GameServer gs = new GameServer(true, true, 100);
-        AioModule aio = new AioModule(gs, gs);
+        AioModule aio = new AioModule(gs, gs, gs);
         try {
             aio.init(InetAddress.getLocalHost().getHostAddress(), 8998, 8);
         }
         catch (Exception e) {
         }
         gs.init(aio, Const.DBAddress, Const.DBPort);
+        aio.asyncAccept();
     }
     
 }
