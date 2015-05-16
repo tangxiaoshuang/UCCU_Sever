@@ -6,6 +6,8 @@
 package uccu_sever;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 
 /**
  *
@@ -17,11 +19,13 @@ enum Target
     DB
 }
 
-public class Datagram
+class Datagram
 {
     static char head = 0xFFFF;
     static byte toGate = 0x01;
     static byte toDB = 0x03;
+    static Charset charset = Charset.forName("GBK");
+    
     public static ByteBuffer wrap(ByteBuffer msg, Target tar, int sn)
     {
         if(msg.position() != 0)
@@ -76,14 +80,78 @@ public class Datagram
     public static char trim(ByteBuffer datagram)
     {
         char res = datagram.getChar(6);
-        ByteBuffer tmp = ByteBuffer.allocate(datagram.remaining() - 10);
+        datagram.limit(datagram.remaining()-2);
         datagram.position(8);
-        while(tmp.hasRemaining())
-            tmp.put(datagram.get());
-        
-        tmp.flip();
-        datagram = tmp;
+        datagram.compact();
+        datagram.flip();
         return res;
+    }
+    
+    //调用这个函数提取字符串不会改变buffer中任何值，你无法直接知道这个字符串结束的位置，找不到返回null
+    public static String extractString(ByteBuffer datagram, int index)
+    {
+        ByteBuffer btmp = ByteBuffer.allocate(datagram.remaining()) ;
+        while(index < datagram.limit())
+        {
+            byte tmp = datagram.get(index);
+            if(tmp == '\0')
+            {
+                break;
+            }
+            btmp.put(tmp);
+            index++;
+            if(index == datagram.limit())
+                return null;
+        }
+        btmp.flip();
+        
+        CharBuffer charbuf = null;
+        try {
+            charbuf = charset.decode(btmp);
+            return charbuf.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    //调用此函数会从buffer的当前位置开始找一个字符串，并更新当前位置为字符串后面第一个位置，找不到则返回null
+    public static String extractString(ByteBuffer datagram)
+    {
+        ByteBuffer btmp = ByteBuffer.allocate(datagram.remaining()) ;
+        int index = datagram.position();
+        while(index < datagram.limit())
+        {
+            byte tmp = datagram.get(index);
+            if(tmp == '\0')
+            {
+                datagram.position(index + 1);
+                break;
+            }
+            btmp.put(tmp);
+            index++;
+            if(index == datagram.limit())
+                return null;
+        }
+        btmp.flip();
+        
+        CharBuffer charbuf = null;
+        try {
+            charbuf = charset.decode(btmp);
+            return charbuf.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    public static void restoreString(ByteBuffer msg, String str)//确保空间足够，否则不会写入buffer
+    {
+        str = str + '\0';
+        if(msg.remaining()<str.length())
+            return;
+        
+        msg.put(charset.encode(str));
     }
     
     public static boolean checked(ByteBuffer dg)
