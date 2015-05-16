@@ -32,6 +32,7 @@ public class GameServer implements Decoder, Register{
         createEnable = crt;
         maxChar = max;
         gates = new HashSet<>();
+        chars = new HashMap<>();
     }
     public void init(AioModule a, String DBHost, int DBPort)
     {
@@ -132,7 +133,44 @@ public class GameServer implements Decoder, Register{
             }
             case 0x010D:
             {
-                
+                int id = datagram.getInt(4);
+                synchronized(chars.get(id))
+                {
+                    Character c = chars.get(id);
+                    if(c.canChat())
+                    {
+                        c.resetTimer(0, 0L);
+                        session.write(Datagram.wrap(datagram, Target.Gate, 0x0F));
+                    }
+                    else
+                    {
+                        msg.putInt(datagram.getInt());//添加sessionID
+                        msg.putInt(0);//拒绝由于说话间隔太短
+                        session.write(Datagram.wrap(msg, Target.Gate, 0x0E));
+                    }
+                }
+                break;
+            }
+            case 0x0110:
+            {
+                int id = datagram.getInt(4);
+                synchronized(chars.get(id))
+                {
+                    Character c = chars.get(id);
+                    if(c.canChat())
+                    {
+                        c.resetTimer(0, 0L);
+                        session.write(Datagram.wrap(datagram, Target.Gate, 0x12));
+                    }
+                    else
+                    {
+                        msg.putInt(datagram.getInt(0));
+                        msg.putInt(0);
+                        msg.putInt(datagram.getInt(8));
+                        session.write(Datagram.wrap(msg, Target.Gate, 0x11));
+                    }
+                }
+                break;
             }
         }
     }
