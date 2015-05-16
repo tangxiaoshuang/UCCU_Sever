@@ -5,6 +5,8 @@
  */
 package uccu_sever;
 
+import java.util.Scanner;
+
 /**
  *
  * @author xiaoshuang
@@ -16,8 +18,10 @@ class Const
     static int[] gatePort;
     static String gameServerAddress;
     static int gameServerPort;
-    static String DBAddress;
-    static int DBPort;
+    static String DBAddress = "162.105.37.202";
+    static int DBPort = 8898;
+    static String LoginAddress = "162.105.37.202";
+    static int LoginPort = 8798;
     
     static long MIN_CHAT_INTERVAL = 1000;//最小聊天间隔
     
@@ -46,9 +50,35 @@ class UCCUTimer
     {
         return getMS()/1000L;
     }
-    
-    
-    
+    public long getMin()
+    {
+        return getMS()/60_000L;
+    }
+    public long getHour()
+    {
+        return getMS()/3_600_000L;
+    }
+}
+
+class Shell
+{
+    Scanner scr;
+    public Shell()
+    {
+        scr = new Scanner(System.in);
+    }
+    public void startShell()
+    {
+        System.out.println("Start Server Shell!");
+        while(scr.hasNextLine())
+        {
+            String str = scr.nextLine();
+        }
+    }
+    public void getLine()
+    {
+        scr.hasNextLine();
+    }
 }
 
 public class BasicLib {

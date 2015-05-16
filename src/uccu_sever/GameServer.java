@@ -9,6 +9,8 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -23,6 +25,8 @@ public class GameServer implements Decoder, Register, Reaper{
     private boolean regEnable;
     private boolean createEnable;
     private int maxChar;
+    
+    private UCCUTimer timer;//记录服务器运行时间
     
     private HashMap<Integer, Character> chars; 
     
@@ -41,7 +45,19 @@ public class GameServer implements Decoder, Register, Reaper{
         ByteBuffer msg = ByteBuffer.allocate(8);
         msg.putInt(12345);
         msg.flip();
-        database.write(Datagram.wrap(msg, Target.DB, 0x00));
+        timer = new UCCUTimer();
+        
+        synchronized(timer)
+        {
+            database.write(Datagram.wrap(msg, Target.DB, 0x00));
+            database.asyncRead();
+            try {
+                timer.wait();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(GameServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        timer.reset(0);
     }
     
     public Character loadCharacter(int sessionID, int id)
@@ -70,8 +86,14 @@ public class GameServer implements Decoder, Register, Reaper{
             switch(sn)
             {
                 case 0x0301://与DB连接无误，开始监听Gate
+                {
                     aio.asyncAccept();
+                    synchronized(timer)
+                    {
+                        timer.notify();
+                    }
                     break;
+                }
             }
         }
     }
@@ -155,6 +177,7 @@ public class GameServer implements Decoder, Register, Reaper{
                     {
                         msg.putInt(datagram.getInt());//添加sessionID
                         msg.putInt(0);//拒绝由于说话间隔太短
+                        msg.flip();
                         session.write(Datagram.wrap(msg, Target.Gate, 0x0E));
                     }
                 }
@@ -176,6 +199,7 @@ public class GameServer implements Decoder, Register, Reaper{
                         msg.putInt(datagram.getInt(0));
                         msg.putInt(0);
                         msg.putInt(datagram.getInt(8));
+                        msg.flip();
                         session.write(Datagram.wrap(msg, Target.Gate, 0x11));
                     }
                 }

@@ -16,7 +16,9 @@ import java.nio.charset.Charset;
 enum Target
 {
     Gate, 
-    DB
+    DB,
+    Login_Gate,
+    CL_Gate
 }
 
 class Datagram
@@ -24,6 +26,8 @@ class Datagram
     static char head = 0xFFFF;
     static byte toGate = 0x01;
     static byte toDB = 0x03;
+    static byte LtoGate = 0x02;
+    static byte CLtoGate = 0x00;
     static Charset charset = Charset.forName("GBK");
     
     public static ByteBuffer wrap(ByteBuffer msg, Target tar, int sn)
@@ -38,10 +42,16 @@ class Datagram
         
         res.putChar(head);
         res.putInt(len);
+        
         if(tar == Target.Gate)
             res.put(toGate);
         else if(tar == Target.DB)
             res.put(toDB);
+        else if(tar == Target.Login_Gate)
+            res.put(LtoGate);
+        else if(tar == Target.CL_Gate)
+            res.put(CLtoGate);
+        
         res.put(SN);
         res.put(msg);
         char checksum = getChecksum(res.array(),res.position());
@@ -55,7 +65,6 @@ class Datagram
     {
         if(buffer.remaining()<8)//包头+校验码不足
         {
-            buffer.compact();
             return null;
         }
             
@@ -63,7 +72,6 @@ class Datagram
         int len = buffer.getInt(2);
         if(buffer.remaining()<len)//包长不足
         {
-            buffer.compact();
             return null;
         }
         
@@ -71,7 +79,6 @@ class Datagram
         while(tmp.hasRemaining())
             tmp.put(buffer.get());
         
-        buffer.compact();
         tmp.flip();
         if(checked(tmp))
             return tmp;

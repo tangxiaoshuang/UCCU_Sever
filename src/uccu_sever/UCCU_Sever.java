@@ -20,7 +20,7 @@ public class UCCU_Sever {
     
     public static void main(String[] args) {
         // TODO code application logic here
-        
+        Shell sh = new Shell();
         
         GameServer gs = new GameServer(true, true, 100);
         AioModule aio = new AioModule(gs, gs, gs);
@@ -30,7 +30,7 @@ public class UCCU_Sever {
         catch (Exception e) {
         }
         gs.init(aio, Const.DBAddress, Const.DBPort);
-        aio.asyncAccept();
+        sh.startShell();
     }
     
 }
