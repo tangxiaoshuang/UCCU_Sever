@@ -21,6 +21,7 @@ public class UCCU_Sever {
     public static void main(String[] args) {
         // TODO code application logic here
         Shell sh = new Shell();
+        UccuLogger.setOptions("logs/GameServer/",LogMode.DEBUG);
         
         GameServer gs = new GameServer(true, true, 100);
         AioModule aio = new AioModule(gs, gs, gs);

@@ -35,11 +35,14 @@ class Const
     static int[] gatePort;
     static String gameServerAddress;
     static int gameServerPort;
-    static String DBAddress = "162.105.37.202";
+    static String DBAddress = "162.105.37.13";
     static int DBPort = 8898;
-    static String LoginAddress = "162.105.37.202";
+    static String LoginAddress = "162.105.37.13";
     static int LoginPort = 8798;
     
+    
+    
+    static String blank = "           ";
     static long MIN_CHAT_INTERVAL = 1000;//最小聊天间隔
     
 }
@@ -116,7 +119,8 @@ class Shell
     }
     public void startShell()
     {
-        System.out.println("Start Server Shell!");
+        //System.out.println("Start Server Shell!");
+        UccuLogger.log("Shell/Start", "Shell mode is on!");
         while(scr.hasNextLine())
         {
             String str = scr.nextLine();
@@ -144,20 +148,31 @@ class UccuLogger
     static String dir = "logs/";
     static FileChannel logfile;
     static String filename = "[date].log";
+    static int fileno = 1;
     
     private String name;
+    
+    
     
     private UccuLogger(String n)
     {
         name = n;
     }
     
-    public static void setMode(int m)
+    public static void setOptions(String directory, int m)
     {
         synchronized(mode)
         {
             mode = m;
         }
+        synchronized(dir)
+        {
+            dir = directory;
+            File d = new File(dir);
+            if(!d.exists())
+                d.mkdirs();
+        }
+        checkFile();
     }
     
     public static void log(String name, String str)
@@ -170,25 +185,46 @@ class UccuLogger
         UccuLogger l = getLogger(name);
         l.log(str, m);
     }
-   
+    public static void warn(String name, String str)
+    {
+        warn(name, str, LogMode.NORMAL);
+    }
+    //推荐使用，可以直接得到一个临时对象，方便使用
+    public static void warn(String name, String str, int m)
+    {
+        UccuLogger l = getLogger(name);
+        l.warn(str, m);
+    }
     public void log(String str) //默认采用正常日志模式
     {
-        log(str, LogMode.NORMAL);
+        this.log(str, LogMode.NORMAL);
     }
     
+    public void warn(String str)
+    {
+        this.warn(str, LogMode.NORMAL);
+    }
+    public void warn(String str, int m)
+    {
+        this.log0("WARNING", str, m);
+    }
     public void log(String str, int m)
     {
-        checkFilename();
+        this.log0("INFO", str, m);
+    }
+    public void log0(String type, String str, int m)
+    {
+        checkFile();
         synchronized(mode)
         {
             if( m < mode )
                 return;
         }
         Calendar c = Calendar.getInstance();
-        int hour = c.get(Calendar.HOUR);
+        int hour = c.get(Calendar.HOUR_OF_DAY);
         int min = c.get(Calendar.MINUTE);
         int sec = c.get(Calendar.SECOND);
-        str = String.format("[%02d:%02d:%02d] [%s/INFO]: %s", hour, min, sec, name, str);
+        str = String.format("[%02d:%02d:%02d] [%s/%s]: %s", hour, min, sec, name, type, str);
         synchronized(System.out)
         {
             System.out.println(str);
@@ -218,7 +254,7 @@ class UccuLogger
         if(!d.exists())
             d.mkdirs();
         
-        checkFilename();
+        checkFile();
         return new UccuLogger(name);
     }
     public static String getDate()
@@ -227,18 +263,41 @@ class UccuLogger
         int year = c.get(Calendar.YEAR);
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DATE);
-        return String.format("%d-%02d-%02d", year, month, day);
+        return String.format("%d-%02d-%02d", year, month+1, day);
     }
     
-    public static void checkFilename()
+    public static String getFilename()
+    {
+        String date = getDate();
+        fileno = 1;
+        File f = new File(dir + date+"-"+fileno+".log");
+        try {
+            while(!f.createNewFile())
+            {
+                ++fileno;
+                f = new File(dir + date+"-"+fileno+".log");
+            }
+            return date+"-"+fileno+".log";
+            
+        } catch (Exception e) {
+            System.err.println("WARNING! Can't get new logfile's name!");
+            return null;
+        }
+    }
+    
+    public static void checkFile()
     {
         synchronized(filename)
         {
-            if(filename.equals(getDate()+".log"))
+            if(filename.equals(getDate()+"-"+fileno+".log"))
                 return;
 
-            filename = getDate()+".log";
-            Path path = Paths.get(dir+filename);
+            filename = getFilename();
+            Path path = null;
+            synchronized(dir)
+            {
+                path = Paths.get(dir+filename);
+            }
             try {
                 if(logfile != null && logfile.isOpen())
                     logfile.close();
@@ -270,8 +329,9 @@ public class BasicLib {
                 sb.append(Integer.toHexString((tmp[i]&0xFF)|0x100).toUpperCase().substring(1, 3));
             }
         } catch (Exception e) {
-            System.out.println("Can't get MD5.");
-            e.printStackTrace();
+            //System.out.println("Can't get MD5.");
+            UccuLogger.warn("BasicLib/MD5", "Can't calculate the MD5! "+e);
+            //e.printStackTrace();
             return null;
         }
         return sb.toString();

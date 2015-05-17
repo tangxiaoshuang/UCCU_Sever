@@ -27,6 +27,7 @@ public class GameServer implements Decoder, Register, Reaper{
     private int maxChar;
     
     private UCCUTimer timer;//记录服务器运行时间
+    private UccuLogger logger;
     
     private HashMap<Integer, Character> chars; 
     
@@ -37,11 +38,19 @@ public class GameServer implements Decoder, Register, Reaper{
         maxChar = max;
         gates = new HashSet<>();
         chars = new HashMap<>();
+        
     }
     public void init(AioModule a, String DBHost, int DBPort)
     {
         aio = a;
         database = aio.connect(DBHost, DBPort, new DatabaseDecoder(), new DatabaseReaper());
+        if(database == null)//连接失败
+        {
+            UccuLogger.log("GameServer/Init","Failed to connect the DatabaseServer at "+DBHost+":"+DBPort);
+            return;
+        }
+        
+        UccuLogger.log("GameServer/Init","Connected the DatabaseServer at "+DBHost+":"+DBPort);
         ByteBuffer msg = ByteBuffer.allocate(8);
         msg.putInt(12345);
         msg.flip();
@@ -216,6 +225,7 @@ public class GameServer implements Decoder, Register, Reaper{
     @Override
     public void reap(AioSession session)
     {
-        System.out.println("Session " + session.getRemoteSocketAddress() + " has disconnected!");
+        //System.out.println("Session " + session.getRemoteSocketAddress() + " has disconnected!");
+        UccuLogger.log("GameServer/Reap","Session"+session.getRemoteSocketAddress()+" has disconnected!");
     }
 }
