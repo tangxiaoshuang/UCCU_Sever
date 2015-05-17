@@ -5,13 +5,10 @@
  */
 package uccu_sever;
 
-import com.sun.corba.se.impl.orb.NormalDataCollector;
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -19,10 +16,6 @@ import java.security.MessageDigest;
 import java.util.Calendar;
 import java.util.EnumSet;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import jdk.nashorn.internal.runtime.Debug;
-import sun.security.jgss.krb5.Krb5Util;
 
 /**
  *
@@ -158,7 +151,6 @@ class UccuLogger
     {
         name = n;
     }
-    
     public static void setOptions(String directory, int m)
     {
         synchronized(mode)
@@ -197,9 +189,9 @@ class UccuLogger
         getLogger(name).warn(str);
     }
     
-    public static void chief(String name, String str)
+    public static void kernel(String name, String str)
     {
-        getLogger(name).chief(str);
+        getLogger(name).kernel(str);
     }
     
     public static void note(String name, String str)
@@ -222,7 +214,7 @@ class UccuLogger
         this.log0("WARNING", str, LogMode.CHIEF);
     }
     
-    public void chief(String str)
+    public void kernel(String str)
     {
         this.log0("KERNEL", str, LogMode.CHIEF);
     }

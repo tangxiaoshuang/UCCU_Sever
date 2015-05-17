@@ -82,13 +82,13 @@ public class AioModule {
             if(port >= 0)
             {
                 asyncServerSocketChannel.bind(new InetSocketAddress(hostName, port), 100);
-                UccuLogger.chief("AioModule/Init", "Bind at " + hostName + ": " + port+". Size of threadpool is "+threadpoolsize+".");
+                UccuLogger.kernel("AioModule/Init", "Bind at " + hostName + ": " + port+". Threadpool Size: "+threadpoolsize+".");
                 //System.out.println("Bind at " + hostName + ": " + port);
             }
                 
         } catch (Exception e) {
             //e.printStackTrace();
-            UccuLogger.warn("AioModule/Init", "Failed to initialize at " + hostName + ": " + port+". Size of threadpool is "+threadpoolsize+".");
+            UccuLogger.warn("AioModule/Init", "Failed to initialize at " + hostName + ": " + port+". Threadpool Size "+threadpoolsize+".");
         }
     }
     public AioSession connect(String hostName, int port, Decoder dec, Reaper rpr)
@@ -106,7 +106,7 @@ public class AioModule {
         }
         return session;
     }
-    public void asyncAccept()
+    public boolean asyncAccept()
     {
         if(!this.started && this.asyncServerSocketChannel.isOpen())
         {
@@ -116,11 +116,13 @@ public class AioModule {
                 asyncServerSocketChannel.accept(this, new AcceptCompletionHandler());
             } catch (Exception e) {
                 UccuLogger.warn("AioModule/AsyncAccept", "Failed to start listening! "+e);
-                return;
+                return false;
             }
-            UccuLogger.log("AioModule/AsyncAccept", "Start listening!");
+            UccuLogger.debug("AioModule/AsyncAccept", "Start listening!");
             this.started = true;
+            return true;
         }
+        return false;
     }
     public void addSession(AioSession session)
     {
@@ -136,7 +138,7 @@ public class AioModule {
         {
             aio.started = false;
             try {
-                UccuLogger.log("AioModule/Accept/Completed", "Accept from "+ socketChannel.getRemoteAddress());
+                UccuLogger.debug("AioModule/Accept/Completed", "Accept from "+ socketChannel.getRemoteAddress());
                 //System.out.println("Accept from "+ socketChannel.getRemoteAddress());
                 socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 AioSession session = new AioSession(socketChannel, decoder, reaper, new ReadCompletionHandler(),
