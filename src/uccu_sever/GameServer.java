@@ -5,6 +5,7 @@
  */
 package uccu_sever;
 
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +28,6 @@ public class GameServer implements Decoder, Register, Reaper{
     private int maxChar;
     
     private UCCUTimer timer;//记录服务器运行时间
-    private UccuLogger logger;
     
     private HashMap<Integer, Character> chars; 
     
@@ -63,9 +63,11 @@ public class GameServer implements Decoder, Register, Reaper{
             try {
                 timer.wait();
             } catch (InterruptedException ex) {
-                Logger.getLogger(GameServer.class.getName()).log(Level.SEVERE, null, ex);
+                UccuLogger.warn("GameServer/Init", "Wait has been interrupted! "+ex);
+                return;
             }
         }
+        UccuLogger.log("GameServer/Init", "Init Completed!");
         timer.reset(0);
     }
     
@@ -96,6 +98,7 @@ public class GameServer implements Decoder, Register, Reaper{
             {
                 case 0x0301://与DB连接无误，开始监听Gate
                 {
+                    UccuLogger.debug("Database/Decode", "Get response from Database"+session.getRemoteSocketAddress()+".");
                     aio.asyncAccept();
                     synchronized(timer)
                     {
@@ -112,7 +115,7 @@ public class GameServer implements Decoder, Register, Reaper{
         @Override
         public void reap(AioSession session)
         {
-            System.out.println("Session " + session.getRemoteSocketAddress() + " has disconnected!");
+            UccuLogger.log("DatabaseSession/Reap","Session"+session.getRemoteSocketAddress()+" has disconnected!");
         }
     }
     
@@ -226,6 +229,26 @@ public class GameServer implements Decoder, Register, Reaper{
     public void reap(AioSession session)
     {
         //System.out.println("Session " + session.getRemoteSocketAddress() + " has disconnected!");
-        UccuLogger.log("GameServer/Reap","Session"+session.getRemoteSocketAddress()+" has disconnected!");
+        UccuLogger.log("GateSession/Reap","Session"+session.getRemoteSocketAddress()+" has disconnected!");
+    }
+    
+    public static void main(String[] args) {
+        // TODO code application logic here
+        Shell sh = new Shell();
+        UccuLogger.setOptions("logs/GameServer/",LogMode.DEBUG);
+        
+        GameServer gs = new GameServer(true, true, 100);
+        
+        UccuLogger.chief("Main", "GameServer started!");
+        AioModule aio = new AioModule(gs, gs, gs);
+        try {
+            aio.init(InetAddress.getLocalHost().getHostAddress(), 8998, 8);
+        }
+        catch (Exception e) {
+            UccuLogger.warn("Main", "Can't get localhost name. "+e);
+            return;
+        }
+        gs.init(aio, Const.DBAddress, Const.DBPort);
+        sh.startShell();
     }
 }

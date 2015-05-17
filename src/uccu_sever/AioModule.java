@@ -82,12 +82,13 @@ public class AioModule {
             if(port >= 0)
             {
                 asyncServerSocketChannel.bind(new InetSocketAddress(hostName, port), 100);
-                UccuLogger.log("AioModule/Init", "Bind at " + hostName + ": " + port);
+                UccuLogger.chief("AioModule/Init", "Bind at " + hostName + ": " + port+". Size of threadpool is "+threadpoolsize+".");
                 //System.out.println("Bind at " + hostName + ": " + port);
             }
                 
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            UccuLogger.warn("AioModule/Init", "Failed to initialize at " + hostName + ": " + port+". Size of threadpool is "+threadpoolsize+".");
         }
     }
     public AioSession connect(String hostName, int port, Decoder dec, Reaper rpr)
@@ -100,7 +101,8 @@ public class AioModule {
             session = new AioSession(socketChannel, dec, rpr, new ReadCompletionHandler(), new WriteCompletionHandler());
             this.addSession(session);
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            UccuLogger.warn("AioModule/Connect", "Failed to connect to "+hostName+":"+port+". "+e);
         }
         return session;
     }
@@ -108,9 +110,15 @@ public class AioModule {
     {
         if(!this.started && this.asyncServerSocketChannel.isOpen())
         {
-            UccuLogger.log("AioModule/AsyncAccept", "Start listening!");
+            
             //System.out.println("Start listening!");
-            asyncServerSocketChannel.accept(this, new AcceptCompletionHandler());
+            try {
+                asyncServerSocketChannel.accept(this, new AcceptCompletionHandler());
+            } catch (Exception e) {
+                UccuLogger.warn("AioModule/AsyncAccept", "Failed to start listening! "+e);
+                return;
+            }
+            UccuLogger.log("AioModule/AsyncAccept", "Start listening!");
             this.started = true;
         }
     }
@@ -124,10 +132,6 @@ public class AioModule {
     }
     private final class AcceptCompletionHandler implements CompletionHandler<AsynchronousSocketChannel, AioModule>
     {
-        public void cancelled(Object attachment)
-        {
-            System.out.println("Accept Operation cancelled!");
-        }
         public void completed(AsynchronousSocketChannel socketChannel, AioModule aio)
         {
             aio.started = false;
@@ -140,7 +144,7 @@ public class AioModule {
                 
                 if(!register.register(session, aio))// Session denied!
                 {
-                    UccuLogger.log("AioModule/Accept/Completed", "Session "+ socketChannel.getRemoteAddress() + "denied!");
+                    UccuLogger.log("AioModule/Accept/Completed", "Session"+ socketChannel.getRemoteAddress() + "is denied!");
                     //System.out.println("Session "+ socketChannel.getRemoteAddress() + "denied!");
                     socketChannel.close();
                 }
@@ -149,7 +153,7 @@ public class AioModule {
             } 
             catch (Exception e) 
             {
-                e.printStackTrace();
+                UccuLogger.warn("AioModule/Accept/Completed", e.toString());
             }
             finally
             {
@@ -164,20 +168,13 @@ public class AioModule {
                 UccuLogger.warn("AioModule/Accept/Failed", "Failed to listening at "+aio.asyncServerSocketChannel.getLocalAddress()+
                         ". "+exc);
             } catch (Exception e) {
+                UccuLogger.warn("AioModule/Accept/Failed", e.toString());
             }
             asyncAccept();
         }
     }
     private final class ReadCompletionHandler implements CompletionHandler<Integer, AioSession>
     {
-        public void cancelled(AioSession session)
-        {
-            try {
-                System.out.println("Session " + session.getSocketChannel().getRemoteAddress() + " has cancelled!");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
         public void completed(Integer res, AioSession session)
         {
             if(res < 0)
@@ -191,29 +188,29 @@ public class AioModule {
                 session.getReadBuffer().flip();
                 
                 //记录缓存中数据信息，方便调试进行
-                
-                StringBuilder sb = new StringBuilder();
-                
-                sb.append("Received ").append(res).append(" bytes from session").append(session.getRemoteSocketAddress());
-                UccuLogger.log("AioModule/Read/Completed", sb.toString(), LogMode.DEBUG);
-                
-                sb.delete(0, sb.length());
-                //sb.append("\r\n");
-                sb.append("Buffer Contents(").append(session.getReadBuffer().remaining()).append("bytes): ");
-                while(session.getReadBuffer().hasRemaining())
+                if(UccuLogger.isEnable(LogMode.DEBUG))
                 {
-                    String tmps = String.format("%02x ", session.getReadBuffer().get());
-                    sb.append(tmps);
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Received ").append(res).append(" bytes from session").append(session.getRemoteSocketAddress());
+                    UccuLogger.debug("AioModule/Read/Completed", sb.toString());
+
+                    sb.delete(0, sb.length());
+                    //sb.append("\r\n");
+                    sb.append("Received contents(").append(session.getReadBuffer().remaining()).append("bytes): ");
+                    while(session.getReadBuffer().hasRemaining())
+                    {
+                        String tmps = String.format("%02x ", session.getReadBuffer().get());
+                        sb.append(tmps);
+                    }
+                    UccuLogger.debug("AioModule/Read/Completed", sb.toString());
+
+                    session.getReadBuffer().rewind();
                 }
-                UccuLogger.log("AioModule/Read/Completed", sb.toString(), LogMode.DEBUG);
-                
-                session.getReadBuffer().rewind();
-                
                 session.decode();
 
                 session.getReadBuffer().compact();
             } catch (Exception e) {
-                e.printStackTrace();
+                UccuLogger.warn("AioModule/Read/Completed", e.toString());
             }
             finally
             {
@@ -231,27 +228,32 @@ public class AioModule {
     }
     private final class WriteCompletionHandler implements CompletionHandler<Integer, AioSession>
     {
-        public void cancelled(AioSession session)
-        {
-            try {
-                System.out.println("Session " + session.getSocketChannel().getRemoteAddress() + " has cancelled!");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
         public void completed(Integer res, AioSession session)
         {
             //System.out.println("Session " + session.getRemoteSocketAddress() + " has writen " + res + " bytes.");
-            UccuLogger.log("AioModule/Write/Completed", "Sent " + res + " bytes to session" + session.getRemoteSocketAddress(), LogMode.DEBUG);
             ByteBuffer msg;
+            ByteBuffer last;
             Queue<ByteBuffer> writeQueue = session.getWriteQueue();
             synchronized(writeQueue)
             {
-                msg = writeQueue.peek();
-                if(!msg.hasRemaining())
+                last = writeQueue.peek();
+                if(!last.hasRemaining())
                     writeQueue.remove();
                 msg = writeQueue.peek();
             }
+            
+            if(last != null && UccuLogger.isEnable(LogMode.DEBUG)){
+                UccuLogger.debug("AioModule/Write/Completed", "Sent " + res + " bytes to session" + session.getRemoteSocketAddress());
+                StringBuilder sb = new StringBuilder();
+                sb.append("Sent contents(").append(res).append("bytes): ");
+                for(int i = last.position()-res; i != last.position(); ++i)
+                {
+                    String tmps = String.format("%02x ", last.get(i));
+                    sb.append(tmps);
+                }
+                UccuLogger.debug("AioModule/Write/Completed", sb.toString());
+            }
+            
             if(msg != null)
             {
                 try {

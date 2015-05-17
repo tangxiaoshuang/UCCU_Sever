@@ -174,61 +174,78 @@ class UccuLogger
         }
         checkFile();
     }
+
+    public static void setMode(Integer m) {
+        synchronized(mode)
+        {
+            mode = m;
+        }
+    }
     
+    public static void debug(String name, String str)
+    {
+        getLogger(name).debug(str);
+    }
+    //推荐使用，可以直接得到一个临时对象，方便使用
     public static void log(String name, String str)
     {
-        log(name, str, LogMode.NORMAL);
+        getLogger(name).log(str);
     }
     //推荐使用，可以直接得到一个临时对象，方便使用
-    public static void log(String name, String str, int m)
-    {
-        UccuLogger l = getLogger(name);
-        l.log(str, m);
-    }
     public static void warn(String name, String str)
     {
-        warn(name, str, LogMode.NORMAL);
+        getLogger(name).warn(str);
     }
-    //推荐使用，可以直接得到一个临时对象，方便使用
-    public static void warn(String name, String str, int m)
+    
+    public static void chief(String name, String str)
     {
-        UccuLogger l = getLogger(name);
-        l.warn(str, m);
+        getLogger(name).chief(str);
     }
-    public void log(String str) //默认采用正常日志模式
+    
+    public static void note(String name, String str)
     {
-        this.log(str, LogMode.NORMAL);
+        getLogger(name).note(str);
+    }
+    
+    public void debug(String str)
+    {
+        this.log0("DEBUG", str, LogMode.DEBUG);
+    }
+    
+    public void log(String str)
+    {
+        this.log0("INFO", str, LogMode.NORMAL);
     }
     
     public void warn(String str)
     {
-        this.warn(str, LogMode.NORMAL);
+        this.log0("WARNING", str, LogMode.CHIEF);
     }
-    public void warn(String str, int m)
+    
+    public void chief(String str)
     {
-        this.log0("WARNING", str, m);
+        this.log0("KERNEL", str, LogMode.CHIEF);
     }
-    public void log(String str, int m)
+    
+    public void note(String str)
     {
-        this.log0("INFO", str, m);
+        this.log0("NOTE", str, LogMode.NONE);
     }
+    
     public void log0(String type, String str, int m)
     {
         checkFile();
-        synchronized(mode)
-        {
-            if( m < mode )
-                return;
-        }
-        Calendar c = Calendar.getInstance();
-        int hour = c.get(Calendar.HOUR_OF_DAY);
-        int min = c.get(Calendar.MINUTE);
-        int sec = c.get(Calendar.SECOND);
-        str = String.format("[%02d:%02d:%02d] [%s/%s]: %s", hour, min, sec, name, type, str);
+        
+        if(!isEnable(m))
+            return;
+        
+        str = this.decorate(type, str);
         synchronized(System.out)
         {
             System.out.println(str);
         }
+        if(m == LogMode.NONE)
+            return;
         try {
             byte[] array = str.getBytes("GBK");
             ByteBuffer tmp = ByteBuffer.allocate(array.length+2);
@@ -247,6 +264,23 @@ class UccuLogger
         }
     }
         
+    public String decorate(String type, String str)
+    {
+        Calendar c = Calendar.getInstance();
+        int hour = c.get(Calendar.HOUR_OF_DAY);
+        int min = c.get(Calendar.MINUTE);
+        int sec = c.get(Calendar.SECOND);
+        return String.format("[%02d:%02d:%02d] [%s/%s]: %s", hour, min, sec, name, type, str);
+    }
+    
+    
+    public static boolean isEnable(int m)
+    {
+        synchronized(mode)
+        {
+            return m >= mode;
+        }
+    }
     
     public static UccuLogger getLogger(String name)
     {
