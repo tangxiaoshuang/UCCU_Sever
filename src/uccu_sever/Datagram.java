@@ -21,7 +21,7 @@ enum Target
     CL_Gate
 }
 
-class Datagram
+public class Datagram
 {
     static char head = 0xFFFF;
     static byte toGate = 0x01;

@@ -7,11 +7,15 @@ package uccu_sever;
 
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  *
@@ -19,7 +23,11 @@ import java.util.logging.Logger;
  */
 
 public class GameServer implements Decoder, Register, Reaper{
-    private Set<AioSession> gates; //处理多Gate情况
+    private HashMap<AioSession, Integer> gates2id; //处理多Gate情况
+    private HashMap<Integer, AioSession> id2gates;
+    private Integer gaten = 0;//当前在线Gate数 
+    private Integer nextGateId = 0;//下一个分配给Gate的ID
+    
     private AioSession database;
     private AioModule aio;
     
@@ -28,6 +36,7 @@ public class GameServer implements Decoder, Register, Reaper{
     private int maxChar;
     
     private UCCUTimer timer;//记录服务器运行时间
+    private Timer deamonTimer;
     
     private HashMap<Integer, Character> chars; 
     
@@ -36,9 +45,10 @@ public class GameServer implements Decoder, Register, Reaper{
         regEnable = reg;
         createEnable = crt;
         maxChar = max;
-        gates = new HashSet<>();
+        gates2id = new HashMap<>();
+        id2gates = new HashMap<>();
         chars = new HashMap<>();
-        
+        deamonTimer = new Timer(true);
     }
     public void init(AioModule a, String DBHost, int DBPort)
     {
@@ -83,20 +93,27 @@ public class GameServer implements Decoder, Register, Reaper{
             }
             timer.reset(0);
         }
+        deamonTimer.schedule(new RestoreDeamon(), 15000, 30000);
+        UccuLogger.log("GameServer/Init", "RestoreDeamon started!");
         UccuLogger.kernel("GameServer/Init", "Init done!");
     }
     
-    public Character loadCharacter(int sessionID, int id)
+    public Character loadCharacter(int gateID, int sessionID, int id)
     {
-        if(chars.containsKey(id))
+        synchronized(chars)
         {
-            return chars.get(id);
+            if(chars.containsKey(id))
+            {
+                return chars.get(id);
+            }    
         }
         //本地无数据
         ByteBuffer msg = ByteBuffer.allocate(32);
-        
-        //按照数据包定义向DB申请得到角色id的角色信息
-        //在DatabaseDecoder中发送消息给Gate
+        msg.putInt(gateID);
+        msg.putInt(sessionID);
+        msg.putInt(id);
+        msg.flip();
+        database.write(Datagram.wrap(msg, Target.DB, 0x02));
         UccuLogger.debug("GameServer/LoadCharacter", "Asking data from Database......");
         return null;
     }
@@ -121,6 +138,39 @@ public class GameServer implements Decoder, Register, Reaper{
                     }
                     break;
                 }
+                case 0x0303:
+                {
+                    int gateID = datagram.getInt();
+                    int id = datagram.getInt(8);
+                    datagram.position(8);
+                    Character newchar = Character.unpack(datagram);
+                    datagram.position(4);
+                    synchronized(chars)
+                    {
+                        chars.put(id, newchar);//加载到游戏服务器本地
+                    }
+                    UccuLogger.debug("Database/Decode", "Get character info id="+id +" from Database");
+                    id2gates.get(gateID).write(Datagram.wrap(datagram, Target.Gate, 0x0A));
+                    UccuLogger.debug("Database/Decode", "Send character info id="+id +" to GateServer"+gateID);
+                    break;
+                }
+                case 0x0305:
+                {
+                    int id = datagram.getInt();
+                    synchronized(chars)
+                    {
+                        if(!chars.containsKey(id))
+                        {
+                            Character newchar = Character.unpack(datagram);
+                            chars.put(id, newchar);
+                            UccuLogger.debug("Database/Decode", "Cached character info id="+id +" from Database");
+                        }
+                        else
+                        {
+                            UccuLogger.debug("Database/Decode", "Cancelled cache character info id="+id +" from Database, info already cached!");
+                        }
+                    }
+                }
             }
         }
     }
@@ -143,6 +193,7 @@ public class GameServer implements Decoder, Register, Reaper{
             return;
         //此处添加安全处理部分，检测非法连接
         char sn = Datagram.trim(datagram);
+        int gateID = gates2id.get(session);
         ByteBuffer msg = ByteBuffer.allocate(256);
         switch(sn)
         {
@@ -165,7 +216,7 @@ public class GameServer implements Decoder, Register, Reaper{
                 int sessionID = datagram.getInt();
                 int id = datagram.getInt();
                 UccuLogger.log("GameServer/Decode", "Add new character("+id+")!");
-                Character c = loadCharacter(sessionID, id);
+                Character c = loadCharacter(gateID, sessionID, id);
                 if(c != null)//缓存命中！
                 {
                     msg.putInt(sessionID);
@@ -190,6 +241,7 @@ public class GameServer implements Decoder, Register, Reaper{
                     {
                         c.posX = posX;
                         c.posY = posY;
+                        c.dirty = true;
                         session.write(Datagram.wrap(datagram, Target.Gate, 0x0C));
                         UccuLogger.debug("GameServer/Decode", "Character("+id+") moved to "+pos(posX, posY)+".");
                     }
@@ -253,20 +305,76 @@ public class GameServer implements Decoder, Register, Reaper{
     @Override
     public boolean register(AioSession session, AioModule aio)
     {
-        gates.add(session);
+        int id;
+        synchronized(gaten)
+        {
+            ++gaten;
+            gates2id.put(session, nextGateId);
+            id2gates.put(nextGateId, session);
+            id = nextGateId;
+            ++nextGateId;
+        }
+        UccuLogger.log("GateSession/Register","New GateServer"+session.getRemoteSocketAddress()+" connected with id = "+id);
         return true;
     }
     @Override
     public void reap(AioSession session)
     {
-        UccuLogger.warn("GateSession/Reap","Lost connection with GateServer"+session.getRemoteSocketAddress()+"!");
+        
+        int id;
+        synchronized(gaten)
+        {
+            --gaten;
+            id = gates2id.get(session);
+            gates2id.remove(session, id);
+            id2gates.remove(id, session);
+        }
+        UccuLogger.warn("GateSession/Reap","Lost connection with GateServer"+session.getRemoteSocketAddress()+"id = "+id);
         //停止向该Gate发送信息，主要注意DatabaseDecoder中行为。
     }
+    
+    private class RestoreDeamon extends TimerTask
+    {
+        @Override
+        public void run() {
+            UccuLogger.debug("RestoreDeamon/Run", "RestoreDeamon start restore characters to Database.");
+            
+            ByteBuffer msg;
+            int id, cnt = 0;
+            HashMap<Integer, Character> tmp;
+            Collection<Character> cs;
+            
+            synchronized(chars)
+            {
+                tmp = (HashMap<Integer, Character>)chars.clone();
+            }
+            cs = tmp.values();
+            UccuLogger.debug("RestoreDeamon/Run", "Total characters in cache: "+ cs.size());
+            
+            Iterator itr = cs.iterator();
+            while(itr.hasNext())
+            {
+                Character c = (Character)itr.next();
+                synchronized(c)
+                {
+                    if(!c.dirty)
+                        continue;
+                    msg = c.pack();
+                    c.dirty = false;
+                    id = c.id;
+                }
+                database.write(Datagram.wrap(msg, Target.DB, 0x04));
+                cnt++;
+                UccuLogger.debug("RestoreDeamon/Run", "Restore character id ="+ id +" to Database!");
+            }
+            UccuLogger.kernel("RestoreDeamon/Run", cnt+" chacters restored.");
+        }
+     }
     
     public static void main(String[] args) {
         // TODO code application logic here
         Shell sh = new Shell();
-        UccuLogger.setOptions("logs/GameServer/",LogMode.NORMAL);
+        UccuLogger.setOptions("logs/GameServer/",LogMode.DEBUG);
         
         GameServer gs = new GameServer(true, true, 100);
         
