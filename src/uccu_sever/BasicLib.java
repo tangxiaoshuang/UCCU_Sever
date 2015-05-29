@@ -28,8 +28,8 @@ class Const
     static int[] gatePort;
     static String gameServerAddress;
     static int gameServerPort;
-    static String DBAddress = "162.105.37.53";
-    static int DBPort = 8898;
+    static String DBAddress = "162.105.37.66";
+    static int DBPort = 55847;
     static String LoginAddress = "162.105.37.13";
     static int LoginPort = 8798;
     
@@ -82,9 +82,9 @@ class UCCUTimer
         long year = (total/31_536_000L);
         
         StringBuilder sb = new StringBuilder();
-        sb.append(year).append("years, ").append(day).append("days, ");
-        sb.append(hour).append("hours, ").append(min).append("minutes, ");
-        sb.append(sec).append("seconds.");
+        sb.append(year).append(" years, ").append(day).append(" days, ");
+        sb.append(hour).append(" hours, ").append(min).append(" minutes, ");
+        sb.append(sec).append(" seconds.");
         return sb.toString();
     }
     public String getTimestamp()
@@ -100,32 +100,6 @@ class UCCUTimer
         return String.format("[%02d:%02d:%02d:%02d:%02d]", year, day, hour, min, sec);
     }
 }
-
-
-
-class Shell
-{
-    Scanner scr;
-    public Shell()
-    {
-        scr = new Scanner(System.in);
-    }
-    public void startShell()
-    {
-        //System.out.println("Start Server Shell!");
-        UccuLogger.log("Shell/Start", "Shell mode is on!");
-        while(scr.hasNextLine())
-        {
-            String str = scr.nextLine();
-        }
-    }
-    public String getLine()
-    {
-        scr.hasNextLine();
-        return scr.nextLine();
-    }
-}
-
 
 class LogMode
 {
@@ -234,7 +208,8 @@ class UccuLogger
         str = this.decorate(type, str);
         synchronized(System.out)
         {
-            System.out.println(str);
+            System.out.println("\r"+str);
+            System.out.print("> ");
         }
         if(m == LogMode.NONE)
             return;
@@ -355,9 +330,7 @@ public class BasicLib {
                 sb.append(Integer.toHexString((tmp[i]&0xFF)|0x100).toUpperCase().substring(1, 3));
             }
         } catch (Exception e) {
-            //System.out.println("Can't get MD5.");
             UccuLogger.warn("BasicLib/MD5", "Can't calculate the MD5! "+e);
-            //e.printStackTrace();
             return null;
         }
         return sb.toString();

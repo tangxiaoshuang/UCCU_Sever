@@ -118,7 +118,7 @@ public class Character {
         synchronized(this)
         {
             msg.putInt(id);
-            msg.put(name.getBytes());
+            Datagram.restoreString(msg, name);
             msg.put((byte)level);
             msg.put(gender);
             msg.putInt(posX);

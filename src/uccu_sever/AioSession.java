@@ -6,6 +6,7 @@
 package uccu_sever;
 
 import java.net.SocketAddress;
+import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
@@ -51,6 +52,11 @@ public class AioSession {
         decoder = dec;
         reaper = rpr;
         writeQueue = new LinkedList<ByteBuffer>();
+        try {
+            socketChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+        } catch (Exception e) {
+            UccuLogger.warn("AioSession/Constructor", "Close nagle false.");
+        }
     }
     public void setAttachment(Object att)
     {

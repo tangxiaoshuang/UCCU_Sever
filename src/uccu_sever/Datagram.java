@@ -32,7 +32,7 @@ public class Datagram
     
     public static ByteBuffer wrap(ByteBuffer msg, Target tar, int sn)
     {
-        if(msg.position() != 0)
+        if(msg.position() != 0 && msg.limit() == msg.capacity())
             msg.flip();
         
         int len = 10 + msg.remaining();
