@@ -13,7 +13,8 @@ import java.util.HashMap;
  */
 public class SkillManager extends KvPairManager<Skill>{
 
-    public SkillManager() {
+    public SkillManager() 
+    {
         super();
     }
     

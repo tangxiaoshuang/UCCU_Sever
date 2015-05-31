@@ -6,6 +6,7 @@
 package Entities;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import uccu_sever.Datagram;
 
@@ -38,6 +39,24 @@ public class KvPair {//所有逻辑元素基础：键值对，且对键值对的
             lock.readLock().unlock();
         }
     }
+    @Override
+    public boolean equals(Object obj)
+    {
+        KvPair kvpair = (KvPair)obj;
+        if(this.name == null)
+            return this.id == kvpair.id;
+        return this.id == kvpair.id && this.name.equals(kvpair.name);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + this.id;
+        hash = 89 * hash + Objects.hashCode(this.name);
+        return hash;
+    }
+    
+    
     public void lockRead()
     {
         lock.readLock().lock();

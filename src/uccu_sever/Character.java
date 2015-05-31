@@ -22,7 +22,7 @@ public class Character {
     int posX;
     int posY;
     boolean dirty; //标记是否被修改过
-    HashMap<Integer, UCCUTimer> timers; //所有的计时器
+    HashMap<Integer, UccuTimer> timers; //所有的计时器
     Lock lock;
     /*
         0 聊天计时器，限制刷屏
@@ -40,7 +40,7 @@ public class Character {
         posX = _posX;
         posY = _posY;
         timers = new HashMap<>();
-        timers.put(0, new UCCUTimer());
+        timers.put(0, new UccuTimer());
         timers.get(0).reset(0);
         lock = new ReentrantLock();
     }
@@ -92,7 +92,7 @@ public class Character {
             if(timers.containsKey(id))
                 timers.get(id).reset(startTime);
             else
-                timers.put(id, new UCCUTimer());
+                timers.put(id, new UccuTimer());
             timers.get(id).reset(startTime);
         }
     }

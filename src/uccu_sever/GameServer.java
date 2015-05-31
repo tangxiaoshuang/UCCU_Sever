@@ -35,7 +35,7 @@ public class GameServer implements Decoder, Register, Reaper{
     private boolean createEnable;
     private int maxChar;
     
-    private UCCUTimer timer;//记录服务器运行时间
+    private UccuTimer timer;//记录服务器运行时间
     private Timer deamonTimer;
     
     private HashMap<Integer, Character> chars; 
@@ -65,7 +65,7 @@ public class GameServer implements Decoder, Register, Reaper{
         ByteBuffer msg = ByteBuffer.allocate(8);
         msg.putInt(12345);
         msg.flip();
-        timer = new UCCUTimer();
+        timer = new UccuTimer();
         synchronized(timer)
         {
             database.write(Datagram.wrap(msg, Target.DB, 0x00));

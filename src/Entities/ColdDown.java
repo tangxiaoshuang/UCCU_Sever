@@ -15,52 +15,92 @@ import uccu_sever.UccuTimer;
  */
 public class ColdDown extends KvPair{//记录冷却的单元
     UccuTimer timer;
-    Skill skill;
+    Entity entity;
     
-    public ColdDown(int id)
+    public ColdDown(int id, String name, Entity entity)
     {
-        super(id, null);
+        super(id, name);
+        this.entity = entity;
+    }
+    public static ColdDown SkillColdDown(int id)//为区分技能和物品，对ID采用段加偏移的方法
+    {
+        Skill skill = null;
         try {
-            this.skill = Managers.skillManager.get(id);
-            this.name = this.skill.name;
+            skill = Managers.skillManager.get(id);
+            return new ColdDown(skill.id, skill.name, skill);
         } catch (Exception e) {
-            UccuLogger.warn("ColdDown/Constructor", e.getMessage());
+            UccuLogger.warn("ColdDown/SkillColdDown", e.getMessage());
+            return null;
         }
-        timer.reset(0);
     }
-    public ColdDown(String name)
+    public static ColdDown ItemColdDown(int id)//为区分技能和物品，对ID采用段加偏移的方法
     {
-        super(0, name);
+        Item item = null;
         try {
-            this.skill = Managers.skillManager.get(name);
-            this.id = this.skill.id;
+            item = Managers.itemManager.get(id);
+            return new ColdDown(item.id, item.name, item);
         } catch (Exception e) {
-            UccuLogger.warn("ColdDown/Constructor", e.getMessage());
+            UccuLogger.warn("ColdDown/ItemColdDown", e.getMessage());
+            return null;
         }
-        timer.reset(0);
     }
-    public ColdDown(ByteBuffer bf)
+    public static ColdDown newColdDown(int id)//根据Id自动判断物品或技能
     {
-        super(0, null);
-        
+        if(Skill.isSkill(id))
+        {
+            return SkillColdDown(id);            
+        }
+        else
+        {
+            return ItemColdDown(id);
+        }
     }
-            
+    public static ColdDown newColdDown(String name)//根据Id自动判断物品或技能
+    {
+        try {
+            Item item = Managers.itemManager.get(name);
+            return new ColdDown(item.id, item.name, item);
+        } catch (Exception e) {
+        }
+        try {
+            Skill skill = Managers.skillManager.get(name);
+            return new ColdDown(skill.id, skill.name, skill);
+        } catch (Exception e) {
+        }
+        return null;
+    }
     public boolean isCompleted()//冷却结束， 改变技能冷却的逻辑可以在这里扩展
     {
         lockRead();
         try
         {
-            return timer.getMS()>skill.coldDown;
+            if(Skill.isSkill(id))
+            {
+                return ((Skill)entity).coldDown <= timer.getMS();            
+            }
+            else
+            {
+                return ((Item)entity).coldDown <= timer.getMS();  
+            }
         }
         finally {
            unlockRead();
         }
     }
-    public void restart()
+    public long getMS()
+    {
+        lockRead();
+        try {
+            return timer.getMS();
+        } finally {
+            unlockRead();
+        }
+    }
+    public void restart(long startTime)
     {
         lockWrite();
         try {
-            this.timer.reset(0);
+            this.timer.reset(startTime);
         } finally {
             unlockWrite();
         }

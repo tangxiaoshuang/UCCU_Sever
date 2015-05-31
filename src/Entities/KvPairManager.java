@@ -126,4 +126,20 @@ public class KvPairManager<T> {
         }
     }
     //可能还有一些加载函数
+    public void lockRead()
+    {
+        lock.readLock().lock();
+    }
+    public void unlockRead()
+    {
+        lock.readLock().unlock();
+    }
+    public void lockWrite()
+    {
+        lock.writeLock().lock();
+    }
+    public void unlockWrite()
+    {
+        lock.writeLock().unlock();
+    }
 }

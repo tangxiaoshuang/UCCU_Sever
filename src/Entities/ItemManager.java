@@ -9,7 +9,9 @@ package Entities;
  *
  * @author xiaoshuang
  */
-public class Managers {
-    static SkillManager skillManager = new SkillManager();
-    static ItemManager itemManager = new ItemManager();
+public class ItemManager extends KvPairManager<Item>{
+    public ItemManager()
+    {
+        super();
+    }
 }

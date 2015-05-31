@@ -9,7 +9,6 @@ package Entities;
  *
  * @author xiaoshuang
  */
-public class Managers {
-    static SkillManager skillManager = new SkillManager();
-    static ItemManager itemManager = new ItemManager();
+public class DataBank {//灵活地储存数据
+    
 }
