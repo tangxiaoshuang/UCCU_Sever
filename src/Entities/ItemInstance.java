@@ -14,7 +14,7 @@ import uccu_sever.UccuLogger;
 public class ItemInstance extends KvPair{//物品在游戏中的实例
     Item item;
     int quantity;
-
+    int equipType;
     public ItemInstance() {
         super(-1, "");
     }

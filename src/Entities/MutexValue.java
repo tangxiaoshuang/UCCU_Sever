@@ -5,21 +5,17 @@
  */
 package Entities;
 
-import java.util.HashMap;
-
 /**
  *
  * @author xiaoshuang
+ * @param <T>
  */
-/*
-    定义XXX_f 表示 float
-    定义XXX_d 表示double
+public class MutexValue<T> extends MutexObject{
+    public T name;
 
-*/
-public class DataBank {//灵活地储存数据
-    HashMap<String, Object> string2data;
-    public DataBank()
-    {
-        
+    public MutexValue(T name) {
+        super();
+        this.name = name;
     }
+    
 }

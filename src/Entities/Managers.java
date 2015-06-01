@@ -5,11 +5,16 @@
  */
 package Entities;
 
+import JythonScripts.JythonScriptManager;
+import Logics.LogicManager;
+
 /**
  *
  * @author xiaoshuang
  */
 public class Managers {
-    static SkillManager skillManager = new SkillManager();
-    static ItemManager itemManager = new ItemManager();
+    static public SkillManager skillManager = new SkillManager();
+    static public ItemManager itemManager = new ItemManager();
+    static public LogicManager logicManager = new LogicManager();
+    static public JythonScriptManager jythonScriptManager = new JythonScriptManager();
 }

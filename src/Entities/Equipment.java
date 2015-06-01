@@ -5,21 +5,16 @@
  */
 package Entities;
 
-import java.util.HashMap;
-
 /**
  *
  * @author xiaoshuang
  */
-/*
-    定义XXX_f 表示 float
-    定义XXX_d 表示double
+public class Equipment extends MutexObject{//装备栏
 
-*/
-public class DataBank {//灵活地储存数据
-    HashMap<String, Object> string2data;
-    public DataBank()
-    {
+    public Equipment() {
+        super();
         
     }
+    
+    
 }

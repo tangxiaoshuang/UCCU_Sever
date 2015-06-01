@@ -6,11 +6,6 @@
 package Entities;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import uccu_sever.UccuTimer;
 
 /**
  *
@@ -20,7 +15,9 @@ public class Character extends AttributionEntity{
     
     boolean dirty; //标记是否被修改过
     ColdDownManager cdManager; //冷却管理模块
-    Inventory inventory;
+    Inventory inventory;//背包
+    Equipment equipment;//装备
+    
     private Character(int id, String name, String description,
             int level, int gender, 
             int hp, int mp, int atk, int def, int exp, int movespeed,
