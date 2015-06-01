@@ -13,13 +13,6 @@ import java.nio.charset.Charset;
  *
  * @author xiaoshuang
  */
-enum Target
-{
-    Gate, 
-    DB,
-    Login_Gate,
-    CL_Gate
-}
 
 public class Datagram
 {

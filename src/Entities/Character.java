@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
  */
 public class Character extends AttributionEntity{
     
-    boolean dirty; //标记是否被修改过
+    public boolean dirty; //标记是否被修改过
     ColdDownManager cdManager; //冷却管理模块
     Inventory inventory;//背包
     SkillScroll skillScroll;//技能
@@ -33,6 +33,7 @@ public class Character extends AttributionEntity{
     {
         super(bf);
         dirty = false;
+        skillScroll = new SkillScroll(bf);
         inventory = new Inventory(bf);
         cdManager = new ColdDownManager(bf);
     }
@@ -40,7 +41,10 @@ public class Character extends AttributionEntity{
     public void pack(ByteBuffer bf)
     {
         super.pack(bf);
+        skillScroll.pack(bf);
         inventory.pack(bf);
         cdManager.pack(bf);
     }
+    
+    
 }

@@ -13,18 +13,18 @@ import java.nio.ByteBuffer;
  */
 public class AttributionEntity extends Entity{
     
-    int level;//可以压缩到Byte
-    int gender;//可以压缩到Byte
+    public int level;//可以压缩到Byte
+    public int gender;//可以压缩到Byte
     
-    int hp;
-    int mp;
-    int atk;
-    int def;
-    int exp;
-    int moveSpeed;
+    public int hp;
+    public int mp;
+    public int atk;
+    public int def;
+    public int exp;
+    public int moveSpeed;
     
-    int posX;
-    int posY;
+    public int posX;
+    public int posY;
     
     public AttributionEntity(int id, String name, String description,
             int level, int gender, 

@@ -9,11 +9,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -187,6 +183,11 @@ public class GameServer implements Decoder, Register, Reaper{
             UccuLogger.warn("DatabaseSession/Reap","Lost connection with Database"+session.getRemoteSocketAddress()+"!");
             //此处告诉Gate，需要断开连接。
         }
+    }
+    
+    public int getGateId(AioSession session)//安全隐患
+    {
+        return gates2id.get(session);
     }
     
     @Override
@@ -394,7 +395,7 @@ public class GameServer implements Decoder, Register, Reaper{
         Shell sh = new Shell();
         UccuLogger.setOptions("logs/GameServer/",LogMode.DEBUG);
         
-        GameServer gs = new GameServer(true, true, 100);
+        GameServer gs = Server.gameServer;
         
         UccuLogger.kernel("Main", "GameServer started!");
         AioModule aio = new AioModule(gs, gs, gs);
