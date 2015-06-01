@@ -7,22 +7,18 @@ package Entities;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
 import uccu_sever.UccuException;
 
 /**
  *
  * @author xiaoshuang
  */
-public class Inventory extends KvPair{
+public class Inventory extends MutexObject{
     int size;//容器容量
     ArrayList<ItemInstance> itemInstances;
 
     public Inventory(int size) {
-        super(-1, "");
+        super();
         this.size = size;
         itemInstances = new ArrayList<>(size);
         ItemInstance it = new ItemInstance();
@@ -33,7 +29,7 @@ public class Inventory extends KvPair{
     }
     public Inventory(ByteBuffer bf)
     {
-        super(-1, "");
+        super();
         this.size = bf.getInt();
         itemInstances = new ArrayList<>(size);
         for(int i = 0; i < this.size; ++i)
@@ -106,7 +102,6 @@ public class Inventory extends KvPair{
             unlockWrite();
         }
     }
-    @Override
     public void pack(ByteBuffer bf)
     {
         lockRead();

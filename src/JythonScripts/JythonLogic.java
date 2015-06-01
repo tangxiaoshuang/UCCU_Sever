@@ -30,11 +30,13 @@ public class JythonLogic extends JythonModule<Logic>{
     {
         try {
             Managers.logicManager.lockWrite();
+            obj.lockWrite();
             super.reload();
-            Managers.logicManager.replace(name, obj);
+            //Managers.logicManager.replace(name, obj);
         } catch (Exception ex) {
             UccuLogger.warn("JythonLogic/Reload", ex.getMessage());
         } finally{
+            obj.unlockWrite();
             Managers.logicManager.unlockWrite();
         }
     }

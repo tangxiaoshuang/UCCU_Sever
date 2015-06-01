@@ -21,6 +21,7 @@ public class JythonScriptManager extends MutexValueManager<String, JythonScript>
                       "data\\scripts\\logics\\items\\",
                       "data\\scripts\\logics\\maps\\",
                       "data\\scripts\\logics\\skills\\"};
+    
     String manifest = "manifest";
     String importFile = "data\\import.py";
     public JythonScriptManager() {

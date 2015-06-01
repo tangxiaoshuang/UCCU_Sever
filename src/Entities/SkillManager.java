@@ -5,18 +5,50 @@
  */
 package Entities;
 
-import java.util.HashMap;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.Scanner;
+import uccu_sever.UccuLogger;
 
 /**
  *
  * @author xiaoshuang
  */
 public class SkillManager extends KvPairManager<Skill>{
-
+    String[] paths = {"data\\data\\skills\\"};
+    String manifest = "manifest";
+    
     public SkillManager() 
     {
         super();
     }
-    
+    public void load()
+    {
+        lockWrite();
+        try {
+            for(String path : paths)
+            {
+                try {
+                    FileInputStream is = new FileInputStream(path+manifest);
+                    InputStreamReader isr = new InputStreamReader(is);
+                    BufferedReader in = new BufferedReader(isr);
+                    String name;
+                    while((name = in.readLine())!=null)
+                    {
+                        File tmp = new File(path+name+".dat");
+                        this.add(new Skill(new Scanner(tmp, "UTF-8")));
+                    }
+                    in.close();
+                    is.close();
+                } catch (Exception e) {
+                    UccuLogger.warn("SkillManager/Load", e.toString());
+                }
+            }
+        } finally {
+            unlockWrite();
+        }
+    }
     
 }

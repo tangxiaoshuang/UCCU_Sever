@@ -16,6 +16,7 @@ public class Character extends AttributionEntity{
     boolean dirty; //标记是否被修改过
     ColdDownManager cdManager; //冷却管理模块
     Inventory inventory;//背包
+    SkillScroll skillScroll;//技能
     Equipment equipment;//装备
     
     private Character(int id, String name, String description,

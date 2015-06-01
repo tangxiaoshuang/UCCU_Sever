@@ -6,14 +6,13 @@
 package Logics;
 
 import Entities.KvPair;
-import Entities.MutexObject;
+import Entities.MutexValue;
 
 /**
  *
  * @author xiaoshuang
  */
-public class Logic extends MutexObject{
-    String name; //逻辑标签
+public class Logic extends MutexValue<String>{
     //一些基本动作的封装
     //示例：
     public void setName(String name)
@@ -21,6 +20,7 @@ public class Logic extends MutexObject{
         this.name = name;
     }
     public Logic() {
+        super(null);
     }
     
     public void doAction(KvPair a1, KvPair a2, KvPair a3, KvPair a4)//涉及的参数

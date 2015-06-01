@@ -38,7 +38,7 @@ public class JythonModule<T> extends JythonScript{
         lockWrite();
         try {
             interp.exec(instanceName+".__class__ = "+name);
-            obj = interp.get(instanceName, tClass);
+            //obj = interp.get(instanceName, tClass);
         } catch (Exception e) {
             UccuLogger.warn("JythonModule/Constructor", e.toString());
         }
