@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import uccu_sever.UccuLogger;
 
 /**
@@ -23,6 +25,11 @@ public class ItemManager extends KvPairManager<Item>{
     public ItemManager()
     {
         super();
+        try {
+            this.add(Item.empty);
+        } catch (Exception ex) {
+            UccuLogger.warn("ItemManager/Constructor", "LOL");
+        }
     }
     public void load()
     {

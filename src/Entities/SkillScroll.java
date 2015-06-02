@@ -7,7 +7,10 @@ package Entities;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import uccu_sever.UccuException;
+import uccu_sever.UccuLogger;
 
 /**
  *
@@ -34,38 +37,46 @@ public class SkillScroll extends MutexObject{
             int data = bf.getInt();
             int level = data & 0x1111111;
             int exp = data >> 7;
-            skillInstances.add(SkillInstance.newSkillInstance(id, level, exp));
+            try {
+                skillInstances.add(Managers.newSkillInstance(id, level, exp));
+            } catch (Exception ex) {
+                UccuLogger.warn("SkillScroll/Constructor", ex.toString());
+            }
         }
     }
     public void add(SkillInstance skillIns) throws Exception
     {
         lockWrite();
         try {
-            if(has(skillIns.id))
+            if(has(skillIns))
                 throw new UccuException("Has already learned!");
             skillInstances.add(skillIns);
         } finally {
             unlockWrite();
         }
     }
-    public boolean has(int id)
+    public boolean has(SkillInstance skillIns)
     {
         lockRead();
         try {
-            SkillInstance skill = new SkillInstance(id, null, null, 0, 0);
-            return skillInstances.contains(skill);
+            return skillInstances.contains(skillIns);
         } finally {
             unlockRead();
         }
     }
-    public void pack(ByteBuffer bf)
+    public void pack(ByteBuffer bf)//BUG在此
     {
         lockRead();
         size = skillInstances.size();
         bf.putInt(size);
         for(int i = 0; i < size; ++i)
         {
-            int data = skillInstances.get(i).id;
+            int data = -1;
+            try {
+                data = skillInstances.get(i).getSkillId();
+            } catch (Exception ex) {
+                UccuLogger.warn("SkillScroll/Pack", ex.toString());
+            }
             bf.putInt(data);
             data = skillInstances.get(i).exp;
             data <<= 7;

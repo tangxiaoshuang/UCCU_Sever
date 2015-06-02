@@ -14,6 +14,9 @@ import uccu_sever.UccuLogger;
  * @author xiaoshuang
  */
 public class Item extends Entity{
+    
+    public static Item empty = new Item(-1, "空", "空", 0, false);
+    
     public static int segment = 0;
     
     public static String[] properties = {"[ID]",
@@ -89,6 +92,15 @@ public class Item extends Entity{
                     }
                 }
             }
+        }
+    }
+    public boolean canPile()
+    {
+        lockRead();
+        try {
+            return this.canPile;
+        } finally {
+            unlockRead();
         }
     }
     

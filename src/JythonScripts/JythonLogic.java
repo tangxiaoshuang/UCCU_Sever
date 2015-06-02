@@ -26,7 +26,7 @@ public class JythonLogic extends JythonModule<Logic>{
     }
     
     @Override
-    public void reload()
+    public void reload()//DeadLock
     {
         try {
             Managers.logicManager.lockWrite();

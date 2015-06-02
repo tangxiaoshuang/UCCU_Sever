@@ -15,6 +15,8 @@ import uccu_sever.UccuLogger;
  */
 public class Skill extends Entity{
     //封装逻辑块
+    public static Skill empty = new Skill(-1, "空", "空", 0);
+    
     public static int segment = 1_000_000_000;//技能统一段偏移，方便处理一些技能和物品统一的问题
     
     public static String[] properties = {"[ID]",

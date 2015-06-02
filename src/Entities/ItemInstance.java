@@ -5,44 +5,64 @@
  */
 package Entities;
 
-import uccu_sever.UccuLogger;
-
 /**
  *
  * @author xiaoshuang
  */
-public class ItemInstance extends KvPair{//物品在游戏中的实例
+public class ItemInstance extends MutexValue<Integer>{
+
+    //物品在游戏中的实例
+    public static ItemInstance empty = new ItemInstance(-1, Item.empty, 0);
+    
+    
+    int id;
     Item item;
     int quantity;
     int equipType;
-    public ItemInstance() {
-        super(-1, "");
+    public ItemInstance() {//构造空实例
+        this(-1, Item.empty,0);
     }
-    
-    
-    public ItemInstance(int id, String name, Item item, int quantity) {
-        super(id, name);
+    public ItemInstance(int id, Item item, int quantity) {
+        super(id);
+        this.id = id;
         this.item = item;
         this.quantity = quantity;
     }
-    public static ItemInstance newItemInstance(int id, int quantity)
+    public int getItemId() throws Exception
     {
-        try {
-            Item item = Managers.itemManager.get(id);
-            return new ItemInstance(item.id, item.name, item, quantity);
-        } catch (Exception e) {
-            UccuLogger.warn("ItemInstance/NewItemInstance", e.getMessage());
-            return null;
-        }
+        return item.id;
     }
-    public static ItemInstance newItemInstance(String name, int quantity)
+    public String getName() throws Exception
     {
-        try {
-            Item item = Managers.itemManager.get(name);
-            return new ItemInstance(item.id, item.name, item, quantity);
-        } catch (Exception e) {
-            UccuLogger.warn("ItemInstance/NewItemInstance", e.getMessage());
-            return null;
-        }
+        return item.name;
     }
+    @Override
+    public boolean equals(Object obj)
+    {
+        ItemInstance itemObj = (ItemInstance)obj;
+//        if(this.id == -1 || itemObj.id == -1)
+//            return itemObj.id == -1 && this.id == -1;
+//if(obj == null)return false;
+        return obj == null ? false : this.item == itemObj.item;
+    }
+//    public static ItemInstance newItemInstance(int id, int quantity)
+//    {
+//        try {
+//            Item item = Managers.itemManager.get(id);
+//            return new ItemInstance(item.id, item.name, item, quantity);
+//        } catch (Exception e) {
+//            UccuLogger.warn("ItemInstance/NewItemInstance", e.getMessage());
+//            return null;
+//        }
+//    }
+//    public static ItemInstance newItemInstance(String name, int quantity)
+//    {
+//        try {
+//            Item item = Managers.itemManager.get(name);
+//            return new ItemInstance(item.id, item.name, item, quantity);
+//        } catch (Exception e) {
+//            UccuLogger.warn("ItemInstance/NewItemInstance", e.getMessage());
+//            return null;
+//        }
+//    }
 }
