@@ -9,6 +9,7 @@ import Entities.CharacterManager;
 import Entities.Character;
 import Entities.ItemInstance;
 import Entities.Managers;
+import Entities.Skill;
 import Entities.SkillInstance;
 import java.nio.ByteBuffer;
 import uccu_sever.AioSession;
@@ -63,6 +64,28 @@ public class LogicExecutor implements Runnable{
                 //发送 Ping
                 msg.putLong(System.currentTimeMillis());
                 session.write(Datagram.wrap(msg, Target.Gate, 0x14));
+                
+                
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ex) {
+                }
+                
+                msg.clear();
+                //发送 Ping
+                msg.putLong(System.currentTimeMillis());
+                session.write(Datagram.wrap(msg, Target.Gate, 0x14));
+                
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException ex) {
+                }
+                
+                msg.clear();
+                //发送 Ping
+                msg.putLong(System.currentTimeMillis());
+                session.write(Datagram.wrap(msg, Target.Gate, 0x14));
+                
                 UccuLogger.debug("GameServer/Decode", "Send Ping to gate.");
                 break;
             }
@@ -107,6 +130,10 @@ public class LogicExecutor implements Runnable{
                         cha.addSkill("全局聊天", 1, 0);
                     if(!cha.hasSkill("私人聊天"))
                         cha.addSkill("私人聊天", 1, 0);
+                    if(!cha.hasSkill("攻击"))
+                        cha.addSkill("攻击", 1, 0);
+                    
+                    cha.gate = gate;//保存所在Gate
                     
                     UccuLogger.debug("LogicExecutor/Run", "Send character("+id+") data to gate.");
                 }
@@ -132,6 +159,14 @@ public class LogicExecutor implements Runnable{
                 Point sp = cha.getPos();
                 
                 long deltaT = System.currentTimeMillis() - globalTime;//已经移动了的时间
+                UccuLogger.debug("LogicExecutor/Run", "Delta time is "+deltaT);
+                if(deltaT < -20)//移动发生在未来
+                {
+                    UccuLogger.warn("LogicExecutor/Run", "Move is in the FUTURE!! ");
+                    return;
+                } 
+                if(deltaT < 0)deltaT = 0;
+                
                 int d = (int) (cha.moveSpeed * deltaT / 1000);//已经移动过的距离
                 Point end = sp.movePointTrunc(tp, d);
                 
@@ -139,18 +174,24 @@ public class LogicExecutor implements Runnable{
                 if(sp.disFrom(tp) < 2000.0)//单次移动距离上限
                 {
                     cha.setPos(end);
-                    TimeEvent event = new TimeEvent(tx, ty, id, 20)
-                    {
-                        @Override
-                        public void exec()
-                        {
-                            playerMove();
-                        }
-                    };
-                    Daemons.addSingleEvent(event);
+                    cha.setTarget(tp);
+                    UccuLogger.debug("LogicExecutor/Run", "Player " +id+" move to "+tp.toString());
+//                    TimeEvent event = new TimeEvent(tx, ty, id, 20)
+//                    {
+//                        @Override
+//                        public void exec()
+//                        {
+//                            playerMove();
+//                        }
+//                    };
+//                    Daemons.addSingleEvent(event);
+                    Daemons.addTimerTask(new MoveEvent(tp, id), 50);
                     session.write(Datagram.wrap(datagram, Target.Gate, 0x0C));
                     UccuLogger.debug("LogicExecutor/Run", "Player "+id+ " is moving to "+tp);
                 }
+                else
+                    UccuLogger.debug("LogicExecutor/Run", "Player " +id+"at"+sp+" CAN'T move! TOO FAR! "+tp.toString());
+                    
                 //应该处理无法移动的情况    
                 break;
             }
@@ -161,7 +202,7 @@ public class LogicExecutor implements Runnable{
                 int sessionID = datagram.getInt();
                 int id = datagram.getInt();
                 String chat = Datagram.extractString(datagram);
-                
+                UccuLogger.note("LogicExecutor/Run", "Player "+id+" said: " + chat);
                 Character cha = null;
                 try {
                     cha = Managers.getCharacter(id);
@@ -241,7 +282,7 @@ public class LogicExecutor implements Runnable{
                 msg.putInt(sessionID);
                 msg.putInt(res);
                 Datagram.restoreString(msg, receName);
-                session.write(Datagram.wrap(msg, Target.Gate, 0x0E));
+                session.write(Datagram.wrap(msg, Target.Gate, 0x11));
                 UccuLogger.debug("LogicExecutor/Run", "Player "+id+ " CAN'T talk! For reason "+res);
                 break;
             }
@@ -255,7 +296,7 @@ public class LogicExecutor implements Runnable{
                 try {
                     chaA = Managers.getCharacter(id);
                 } catch (Exception e) {
-                    UccuLogger.warn("LogicExecutor/Run", ""+(Integer)((int)sn)+e.toString());
+                    UccuLogger.warn("LogicExecutor/Run", ""+(Integer)((int)sn)+" "+e.toString());
                     break;
                 }
                 chaA.lockWrite();
@@ -271,11 +312,11 @@ public class LogicExecutor implements Runnable{
                 long timestamp = datagram.getLong();
                 
                 gate.ping = (System.currentTimeMillis() - timestamp)/2;
-                long globalTime = System.currentTimeMillis() + gate.ping;
-                msg.putLong(globalTime);
+                //long globalTime = System.currentTimeMillis() + gate.ping;
+                msg.putLong(gate.ping);
                 session.write(Datagram.wrap(msg, Target.Gate, 0x16));
                 UccuLogger.note("LogicExecutor/Run", "Gate "+gate.id+ " return Ping : "+gate.ping + "ms.");
-                UccuLogger.log("LogicExecutor/Run", "Gate "+gate.id+ " GlobalTime : " + globalTime);
+                //UccuLogger.log("LogicExecutor/Run", "Gate "+gate.id+ " GlobalTime : " + globalTime);
 
                 break;
             }
@@ -336,8 +377,10 @@ public class LogicExecutor implements Runnable{
                 SkillInstance skillIns = null;
                 Character chaA = null;
                 Character chaB = null;
+                String skillName = null;
                 try {
                     skillIns = Managers.getSkillInstance(skillInsId);
+                    skillName = skillIns.getName();
                     chaA = Managers.getCharacter(chaId1);
                     if(chaId2 != -1)
                         chaB = Managers.getCharacter(chaId2);
@@ -347,13 +390,31 @@ public class LogicExecutor implements Runnable{
                     UccuLogger.warn("LogicExecutor/Run", e.toString());
                 }
                 
-                if(optype == 0)
-                    skillIns.cast(chaA, chaB, null);
+                if(!chaA.hasSkill(skillName))
+                {
+                    UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" DON'T HAVE SKILL "+skillName);
+                    //玩家没有学会该技能
+                    //发送无技能失败包
+                    break;
+                }
+                if(!chaA.cdCompleted(skillName))
+                {
+                    UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" CAN'T CAST SKILL"+skillName+"Not Cold Down");
+                    //玩家技能未冷却好
+                    //发送技能冷却中包
+                    break;
+                }
                 
+                if(optype == 0)
+                {
+                    skillIns.cast(chaA, chaB, null);
+                    UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" cast skill "+skillName+ " to player "+chaId2);
+                }
                 //处理丢弃
                 if(skillIns.hasTag("attr1"))
                 {
-                    msg.putInt(chaId1);
+                    UccuLogger.debug("LogicExecutor/Run", "Skill "+skillName+ " has attr1 !");
+                    //msg.putInt(chaId1);
                     chaA.pack(msg);
                     session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
                     UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId1+ " attr!");
@@ -361,10 +422,12 @@ public class LogicExecutor implements Runnable{
                 }
                 if(skillIns.hasTag("attr2"))
                 {
-                    msg.putInt(chaId2);
-                    chaA.pack(msg);
+                    UccuLogger.debug("LogicExecutor/Run", "Skill "+skillName+ " has attr2 !");
+                    //msg.putInt(chaId2);
+                    chaB.pack(msg);
                     session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
                     UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId2+ " attr!");
+                    msg.clear();
                 }
                 //发送更新包在脚本中执行
                 

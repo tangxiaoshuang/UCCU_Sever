@@ -21,7 +21,8 @@ public class ColdDownManager extends KvPairManager<ColdDown>{
     }
     public ColdDownManager(ByteBuffer bf) {
         super();
-        while(bf.hasRemaining())
+        int size = bf.getInt();
+        for(int i = 0; i < size; i++)
         {
             int id = bf.getInt();
             long startTime = bf.getInt();
@@ -105,7 +106,9 @@ public class ColdDownManager extends KvPairManager<ColdDown>{
         Collection<KvPair> cs = id2kvpair.values();
         int size = 0;
         //ByteBuffer msg = ByteBuffer.allocate(1024);
+        int sizepos = bf.position();
         bf.putInt(size);
+        
         Iterator itr = cs.iterator();
         while(itr.hasNext())
         {
@@ -117,7 +120,7 @@ public class ColdDownManager extends KvPairManager<ColdDown>{
                 size ++;
             }
         }
-        bf.putInt(0, size);
+        bf.putInt(sizepos, size);
         unlockRead();
     }
 }

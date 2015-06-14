@@ -20,6 +20,7 @@ public class ColdDown extends KvPair{//记录冷却的单元
     {
         super(id, name);
         this.entity = entity;
+        this.timer = new UccuTimer();
     }
     public static ColdDown SkillColdDown(int id)//为区分技能和物品，对ID采用段加偏移的方法
     {

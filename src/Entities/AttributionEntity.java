@@ -51,8 +51,8 @@ public class AttributionEntity extends Entity{
 
     public AttributionEntity(ByteBuffer bf) {
         super(bf);
-        this.level = bf.getInt();
-        this.gender = bf.getInt();
+        this.level = bf.get();
+        this.gender = bf.get();
         this.life = bf.getInt();
         this.curLife = bf.getInt();
         this.mana = bf.getInt();

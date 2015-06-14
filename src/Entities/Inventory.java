@@ -32,6 +32,16 @@ public class Inventory extends MutexObject{
     {
         super();
         this.size = bf.getInt();
+        if(this.size == 0) //新创建角色初始化背包
+        {
+            this.size = 32;
+            itemInstances = new ArrayList<>(size);
+            for(int i = 0; i < this.size; i++)
+            {
+                itemInstances.add(ItemInstance.empty);
+            }
+            return;
+        }
         itemInstances = new ArrayList<>(size);
         for(int i = 0; i < this.size; ++i)
         {

@@ -71,7 +71,7 @@ public class Test {
         }
         
         try {
-            Managers.itemManager.get(1).itemLogic.doAction();
+            System.out.println(Managers.skillManager.get("全局聊天").coldDown);;
         } catch (Exception ex) {
             UccuLogger.warn("Test", ex.toString());
         }

@@ -39,6 +39,7 @@ public class TimeEvent {
     int id;
     public void playerMove()
     {
+        UccuLogger.note("TimeEvent/PlayerMove", "New step!");
         Character cha = null;
         try {
             cha = Managers.getCharacter(id);

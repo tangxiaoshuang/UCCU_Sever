@@ -28,7 +28,7 @@ public class Skill extends Entity{
                                          "[LOGICS]"};
     
     
-    int coldDown;//释放间隔
+    public int coldDown;//释放间隔
     TagManager tags;
     DataBank dataBank;
     SkillLogic skillLogic;

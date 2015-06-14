@@ -15,7 +15,7 @@ import uccu_sever.UccuLogger;
  */
 public class Item extends Entity{
     
-    public static Item empty = new Item(-1, "空", "空", 0, false);
+    public static Item empty = new Item(0, "空", "空", 0, false);
     
     public static int segment = 0;
     

@@ -213,6 +213,7 @@ public class AioModule {
                 //session.getReadBuffer().compact();
             } catch (Exception e) {
                 UccuLogger.warn("AioModule/Read/Completed", e.toString());
+                e.printStackTrace();
             }
             finally
             {

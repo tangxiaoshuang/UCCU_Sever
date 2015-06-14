@@ -11,6 +11,7 @@ import Entities.Managers;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Timer;
 import java.util.TimerTask;
 import uccu_sever.AioSession;
 import uccu_sever.Datagram;
@@ -23,7 +24,16 @@ import uccu_sever.UccuLogger;
  * @author xiaoshuang
  */
 public class RestoreDaemon extends TimerTask{
-    AioSession database = Server.gameServer.database;
+    static AioSession database = Server.gameServer.database;
+    Timer timer;
+    public RestoreDaemon()
+    {
+        timer = new Timer(true);
+    }
+    public void start(int delay, int period)
+    {
+        timer.schedule(this, delay, period);
+    }
     @Override
     public void run() {
         UccuLogger.debug("RestoreDeamon/Run", "RestoreDeamon start restoring characters to Database.");
@@ -45,20 +55,25 @@ public class RestoreDaemon extends TimerTask{
                 cha.dirty = false;
                 cha.unlockWrite();
                 
+                msg.clear();
                 cha.pack(msg);
                 database.write(Datagram.wrap(msg, Target.DB, 0x04));
-                msg.clear();
                 
+                msg.clear();
+                msg.putInt(cha.id);
                 cha.packSkillScroll(msg);
                 database.write(Datagram.wrap(msg, Target.DB, 0x0D));
-                msg.clear();
                 
+                msg.clear();
+                msg.putInt(cha.id);
                 cha.packInventory(msg);
                 database.write(Datagram.wrap(msg, Target.DB, 0x07));
-                msg.clear();
                 
+                msg.clear();
+                msg.putInt(cha.id);
                 cha.packColdDown(msg);
                 database.write(Datagram.wrap(msg, Target.DB, 0x09));
+                
                 
                 UccuLogger.debug("RestoreDeamon/Run", "Restore character id ="+ cha.id +" to Database!");
                 cnt++;

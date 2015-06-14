@@ -5,9 +5,8 @@
  */
 package Entities;
 
+import GameServer.Gate;
 import java.nio.ByteBuffer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import uccu_sever.Point;
 import uccu_sever.UccuLogger;
 
@@ -19,10 +18,15 @@ public class Character extends AttributionEntity{
     
     public boolean dirty; //标记是否被修改过
     public boolean online;
+    
     ColdDownManager cdManager; //冷却管理模块
     Inventory inventory;//背包
     SkillScroll skillScroll;//技能
     Equipment equipment;//装备
+    
+    //临时帮助变量
+    public Point target;
+    public Gate gate;
     
     private Character(int id, String name, String description,
             int level, int gender, 
@@ -32,6 +36,7 @@ public class Character extends AttributionEntity{
         super(id, name, description, level, gender, life, curLife, mana, curMana, atk, def, exp, movespeed, posX, posY, feature);
         dirty = false;
         online = true;
+        target = new Point(-1,-1);
         cdManager = new ColdDownManager();
         inventory = new Inventory(32);
     }
@@ -40,6 +45,7 @@ public class Character extends AttributionEntity{
         super(bf);
         dirty = false;
         online = true;
+        target = new Point(-1,-1);
         skillScroll = null;
         inventory = null;
         cdManager = null;
@@ -96,9 +102,15 @@ public class Character extends AttributionEntity{
         lockWrite();
         this.posX = p.x;
         this.posY = p.y;
+        this.dirty = true;
         unlockWrite();
     }
-    
+    public void setTarget(Point p)
+    {
+        lockWrite();
+        this.target = new Point(p);
+        unlockWrite();
+    }
     
     public boolean cdCompleted(int id)
     {
@@ -110,11 +122,28 @@ public class Character extends AttributionEntity{
     }
     public void startCd(int id)
     {
+        lockWrite();
         cdManager.start(id);
+        this.dirty = true;
+        unlockWrite();
     }
     public void startCd(String name)
     {
+        lockWrite();
         cdManager.start(name);
+        this.dirty = true;
+        unlockWrite();
+    }
+    public void startCd(SkillInstance skillIns)
+    {
+        lockWrite();
+        try {
+            cdManager.start(skillIns.getName());
+            this.dirty = true;
+        } catch (Exception e) {
+            UccuLogger.warn("Character/StartCd", e.toString());
+        }
+        unlockWrite();
     }
     
     
@@ -129,18 +158,28 @@ public class Character extends AttributionEntity{
     
     public void addSkill(int id, int level, int exp)
     {
+        lockWrite();
         try {
             skillScroll.add(Managers.newSkillInstance(id, level, exp));
+            this.dirty = true;
         } catch (Exception ex) {
             UccuLogger.warn("Character/AddSkill", ex.toString());
+        }
+        finally{
+            unlockWrite();
         }
     }
     public void addSkill(String name, int level, int exp)
     {
+        lockWrite();
         try {
             skillScroll.add(Managers.newSkillInstance(name, level, exp));
+            this.dirty = true;
         } catch (Exception ex) {
             UccuLogger.warn("Character/AddSkill", ex.toString());
+        }
+        finally{
+            unlockWrite();
         }
     }
 }

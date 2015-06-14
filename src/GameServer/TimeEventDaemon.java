@@ -6,8 +6,10 @@
 package GameServer;
 
 import java.util.Comparator;
+import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.PriorityBlockingQueue;
+import uccu_sever.UccuLogger;
 
 /**
  *
@@ -16,6 +18,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class TimeEventDaemon extends TimerTask{
     int cycle = 10;
     PriorityBlockingQueue<TimeEvent> eventQueue;
+    Timer timer;
     
     public TimeEventDaemon(int cycle)
     {
@@ -34,10 +37,17 @@ public class TimeEventDaemon extends TimerTask{
             }
         };
         eventQueue = new PriorityBlockingQueue<>(11, order);
+        timer = new Timer(true);
+    }
+    
+    public void start(int delay)
+    {
+        timer.schedule(this, delay, cycle);
     }
     
     public void addSingleEvent(TimeEvent event)
     {
+        UccuLogger.debug("TimeEventDaemon/AddSingleEvent", "Add new time event!");
         event.nextTime = System.currentTimeMillis() + event.step;
         eventQueue.add(event);
     }
@@ -45,14 +55,22 @@ public class TimeEventDaemon extends TimerTask{
     @Override
     public void run()
     {
+        
         TimeEvent event = eventQueue.poll();
         if(event == null)
+        {
+            //UccuLogger.note("TimeEventDaemon/Run", " Idle.........................");
             return;
+        }
+            
+        
         long current = System.currentTimeMillis();
         long nxt = event.nextTime;
+        
+        UccuLogger.note("TimeEventDaemon/Run", "Event get! current "+current + " next : "+nxt);
         if(nxt > current)//不应该执行事件
             return;
-        
+        UccuLogger.note("TimeEventDaemon/Run", "Execute!");
         event.exec();
         
         if(event.step == -1)//时间不需再次执行

@@ -7,10 +7,9 @@ package uccu_sever;
 
 import Entities.Managers;
 import Entities.Character;
+import GameServer.Daemons;
 import GameServer.Gate;
 import GameServer.LogicExecutorService;
-import GameServer.RestoreDaemon;
-import GameServer.TimeEventDaemon;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Timer;
@@ -85,8 +84,7 @@ public class GameServer implements Decoder, Register, Reaper{
             }
             timer.reset(0);
         }
-        deamonTimer.schedule(new RestoreDaemon(), 15000, 30000);
-        deamonTimer.schedule(new TimeEventDaemon(10), 10, 10);
+        Daemons.start(15000, 30000);
         UccuLogger.log("GameServer/Init", "RestoreDeamon started!");
         UccuLogger.kernel("GameServer/Init", "Init done!");
     }
@@ -114,8 +112,8 @@ public class GameServer implements Decoder, Register, Reaper{
         @Override
         public void decode(ByteBuffer buffer, AioSession session)
         {
-            ByteBuffer msg = ByteBuffer.allocate(2048);
-            while (true) {                
+            while (true) {
+                ByteBuffer msg = ByteBuffer.allocate(2048);
                 ByteBuffer datagram = Datagram.getDatagram(buffer);
                 if(datagram == null)
                     return;
@@ -137,14 +135,16 @@ public class GameServer implements Decoder, Register, Reaper{
                         int id = datagram.getInt(8);
                         datagram.position(8);
                         
-                        Managers.newCharacter(datagram);
+                        Character cha = Managers.newCharacter(datagram);
+                        
+                        cha.gate = Managers.getGate(gateID);
                         
                         datagram.position(4);
                         datagram.compact();
                         datagram.flip();
                         
                         UccuLogger.debug("Database/Decode", "Get character info id="+id +" from Database");
-                        Managers.getGate(gateID).session.write(Datagram.wrap(datagram, Target.Gate, 0x0A));
+                        cha.gate.session.write(Datagram.wrap(datagram, Target.Gate, 0x0A));
                         UccuLogger.debug("Database/Decode", "Send character info id="+id +" to GateServer"+gateID);
                         break;
                     }
@@ -175,6 +175,8 @@ public class GameServer implements Decoder, Register, Reaper{
                             UccuLogger.warn("Database/Decode", e.toString());
                             break;
                         }
+                        if(datagram.getInt(datagram.position()) == 0)//新玩家初次进入游戏
+                            cha.dirty = true;
                         cha.loadInventory(datagram);
                         
                         msg.putInt(sessionID);
@@ -219,7 +221,7 @@ public class GameServer implements Decoder, Register, Reaper{
                     }   
                     case 0x030A: // 好友信息
                     {
-                        
+                        break;
                     }
                     case 0x030C: // 技能信息
                     {
@@ -237,6 +239,13 @@ public class GameServer implements Decoder, Register, Reaper{
                             break;
                         }
                         cha.loadSkillScroll(datagram);
+                        
+                        if(!cha.hasSkill("全局聊天"))
+                            cha.addSkill("全局聊天", 1, 0);
+                        if(!cha.hasSkill("私人聊天"))
+                            cha.addSkill("私人聊天", 1, 0);
+                        if(!cha.hasSkill("攻击"))
+                            cha.addSkill("攻击", 1, 0);
                         
                         msg.putInt(sessionID);
                         cha.packSkillScrollToClient(msg);
@@ -274,6 +283,7 @@ public class GameServer implements Decoder, Register, Reaper{
             //此处添加安全处理部分，检测非法连接
             char sn = Datagram.trim(datagram);
             
+            UccuLogger.note("GameServer/Decode", "Submit new task!");
             logicService.handle(sn, datagram, session);
         
         }
@@ -305,7 +315,7 @@ public class GameServer implements Decoder, Register, Reaper{
     public static void main(String[] args) {
         // TODO code application logic here
         Shell sh = new Shell();
-        UccuLogger.setOptions("logs/GameServer/",LogMode.NORMAL);
+        UccuLogger.setOptions("logs/GameServer/",LogMode.DEBUG);
         
         GameServer gs = Server.gameServer;
         
