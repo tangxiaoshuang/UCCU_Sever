@@ -6,10 +6,7 @@
 package uccu_sever;
 
 import Entities.Managers;
-import java.nio.Buffer;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.python.util.PythonInterpreter;
 import org.python.core.*;
 
@@ -31,6 +28,12 @@ class Dick extends PyObject
 
 
 public class Test {
+    
+    public void t1(Integer a)
+    {
+        a = a + 5;
+    }
+    
     public static void main(String[] args) {
         // TODO code application logic here
         PythonInterpreter interp = new PythonInterpreter();
@@ -42,12 +45,18 @@ public class Test {
         //Object tmp = fl;
         
         //System.out.println(tmp.getClass().cast(tmp));
+        Test t = new Test();
+        
+        Integer a = 1;
+        t.t1(a);
+        System.out.println(a);
         
         Managers.jythonScriptManager.loadLogics();
-        
+        Managers.itemManager.load();
+        Managers.skillManager.load();
         
         try {
-            Managers.logicManager.get("test").doAction();
+            Managers.itemManager.get(1).itemLogic.doAction();
         } catch (Exception ex) {
             UccuLogger.warn("Test", ex.toString());
         }
@@ -62,10 +71,13 @@ public class Test {
         }
         
         try {
-            Managers.logicManager.get("test").doAction();
+            Managers.itemManager.get(1).itemLogic.doAction();
         } catch (Exception ex) {
             UccuLogger.warn("Test", ex.toString());
         }
+        
+        
+        
         
         while(scr.hasNextLine())
         {

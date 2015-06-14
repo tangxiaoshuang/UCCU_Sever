@@ -27,7 +27,7 @@ public class ItemInstanceManager extends MutexValueManager<Integer, ItemInstance
         try {
             Integer id = idleID.poll();
             if(id == null)
-                id = maxID;
+                id = maxID++;
             Item item = Managers.getItem(itemId);
             ItemInstance itemIns = new ItemInstance(id, item, quantity);
             this.add(itemIns);

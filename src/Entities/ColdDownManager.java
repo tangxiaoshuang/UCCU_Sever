@@ -24,7 +24,7 @@ public class ColdDownManager extends KvPairManager<ColdDown>{
         while(bf.hasRemaining())
         {
             int id = bf.getInt();
-            long startTime = bf.getLong();
+            long startTime = bf.getInt();
             start(id);
             ColdDown cd;
             try {
@@ -38,6 +38,7 @@ public class ColdDownManager extends KvPairManager<ColdDown>{
     public void start(int id)//开始指定id冷却
     {
         ColdDown cd = null;
+        lockWrite();
         try {
             cd = this.get(id);
             cd.restart(0);
@@ -48,10 +49,14 @@ public class ColdDownManager extends KvPairManager<ColdDown>{
             } catch (Exception ex1) {
             }
         }
+        finally{
+            unlockWrite();
+        }
     }
     public void start(String name)//开始指定id技能冷却
     {
         ColdDown cd = null;
+        lockWrite();
         try {
             cd = this.get(name);
             cd.restart(0);
@@ -62,38 +67,57 @@ public class ColdDownManager extends KvPairManager<ColdDown>{
             } catch (Exception ex1) {
             }
         }
+        finally {
+            unlockWrite();
+        }
     }
     public boolean isCompleted(int id)
     {
         ColdDown cd = null;
+        lockRead();
         try {
             cd = this.get(id);
             return cd.isCompleted();
         } catch (Exception e) {
             return true;
         }
+        finally{
+            unlockRead();
+        }
     }
     public boolean isCompleted(String name)
     {
         ColdDown cd = null;
+        lockRead();
         try {
             cd = this.get(name);
             return cd.isCompleted();
         } catch (Exception e) {
             return true;
         }
+        finally{
+            unlockRead();
+        }
     }
     public void pack(ByteBuffer bf)
     {
         lockRead();
         Collection<KvPair> cs = id2kvpair.values();
+        int size = 0;
+        //ByteBuffer msg = ByteBuffer.allocate(1024);
+        bf.putInt(size);
         Iterator itr = cs.iterator();
         while(itr.hasNext())
         {
-            ColdDown cd = (ColdDown)(itr.next());
-            bf.putInt(cd.id);
-            bf.putLong(cd.getMS());
+            ColdDown cd = (ColdDown)(itr.next());//冷却好的技能可以不添加
+            if(!cd.isCompleted())
+            {
+                bf.putInt(cd.id);
+                bf.putInt((int)cd.getMS());
+                size ++;
+            }
         }
+        bf.putInt(0, size);
         unlockRead();
     }
 }

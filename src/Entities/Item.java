@@ -103,5 +103,24 @@ public class Item extends Entity{
             unlockRead();
         }
     }
-    
+    public void trigger(ItemInstance itemInstance, Character player, KvPair a1, KvPair a2)
+    {
+        lockRead();
+        itemLogic.lockRead();
+        itemLogic.trigger(itemInstance, player, a1, a2);
+        itemLogic.unlockRead();
+        unlockRead();
+    }
+    public boolean hasTag(String name)
+    {
+        lockRead();
+        tags.lockRead();
+        
+        try {
+            return tags.has(name);
+        } finally {
+            tags.unlockRead();
+            unlockRead();
+        }
+    }
 }

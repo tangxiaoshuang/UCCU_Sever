@@ -14,8 +14,8 @@ import uccu_sever.Datagram;
  * @author xiaoshuang
  */
 public class KvPair extends MutexObject{//所有逻辑元素基础：键值对，且对键值对的修改可以采用读写互斥
-    int id;
-    String name;
+    public int id;
+    public String name;
     public KvPair(int id, String name) {
         super();
         this.id = id;

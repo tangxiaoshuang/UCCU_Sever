@@ -30,9 +30,32 @@ public class SkillInstance extends MutexValue<Integer>{//技能在游戏中的�
         this.level = level;
         this.exp = exp;
     }
+    
+    public SkillInstance(Skill skill)
+    {
+        this(-1, skill, 0, 0);
+    }
+    
     public int getSkillId() throws Exception
     {
         return skill.id;
+    }
+    
+    public boolean hasTag(String name)
+    {
+        lockRead();
+        try {
+            return skill.hasTag(name);
+        } finally {
+            unlockRead();
+        }
+    }
+    
+    public void cast(Character player, KvPair a1, KvPair a2)
+    {
+        lockRead();
+        skill.cast(this, player, a1, a2);
+        unlockRead();
     }
     public String getName() throws Exception
     {
@@ -45,24 +68,5 @@ public class SkillInstance extends MutexValue<Integer>{//技能在游戏中的�
         return obj == null ? false : this.skill == skillObj.skill;
     }
     
-//    public static SkillInstance newSkillInstance(int id, int level, int exp)
-//    {
-//        try {
-//            Skill skill = Managers.skillManager.get(id);
-//            return new SkillInstance(skill.id, skill.name, skill, level, exp);
-//        } catch (Exception e) {
-//            UccuLogger.warn("ItemInstance/NewItemInstance", e.getMessage());
-//            return null;
-//        }
-//    }
-//    public static SkillInstance newSkillInstance(String name, int level, int exp)
-//    {
-//        try {
-//            Skill skill = Managers.skillManager.get(name);
-//            return new SkillInstance(skill.id, skill.name, skill, level, exp);
-//        } catch (Exception e) {
-//            UccuLogger.warn("ItemInstance/NewItemInstance", e.getMessage());
-//            return null;
-//        }
-//    }
+
 }

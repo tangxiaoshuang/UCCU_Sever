@@ -7,7 +7,7 @@ package Logics;
 
 import Entities.KvPair;
 import Entities.SkillInstance;
-
+import Entities.Character;
 /**
  *
  * @author xiaoshuang

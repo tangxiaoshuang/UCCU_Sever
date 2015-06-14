@@ -210,12 +210,13 @@ public class AioModule {
                 }
                 session.decode();
 
-                session.getReadBuffer().compact();
+                //session.getReadBuffer().compact();
             } catch (Exception e) {
                 UccuLogger.warn("AioModule/Read/Completed", e.toString());
             }
             finally
             {
+                session.getReadBuffer().compact();
                 session.asyncRead();
             }
         }

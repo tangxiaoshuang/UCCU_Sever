@@ -62,7 +62,7 @@ public class Datagram
         }
             
         
-        int len = buffer.getInt(2);
+        int len = buffer.getInt(buffer.position() + 2);
         if(buffer.remaining()<len)//包长不足
         {
             return null;

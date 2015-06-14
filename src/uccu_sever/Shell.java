@@ -24,7 +24,7 @@ public class Shell
     private PythonInterpreter interp;//python解释器
     private String[] classes;//环境变量
     private Path workPath;
-    private String pack;
+    private String[] pack;
     
     private Object core;
     
@@ -40,7 +40,13 @@ public class Shell
         classes[2] = "Character";
         classes[3] = "BasicLib";
         workPath = Paths.get(dir);
-        pack = getClass().getPackage().getName();
+        pack = new String[5];
+        pack[0] = "uccu_sever";
+        pack[1] = "Entities";
+        pack[2] = "Logics";
+        pack[3] = "GameServer";
+        pack[4] = "JythonScripts";
+        
         pyResult = new ByteArrayOutputStream();
         interp.setOut(pyResult);
         //内置环境变量
@@ -53,7 +59,7 @@ public class Shell
     {
         UccuLogger.log("Shell/Start", "Initialize shell mode ...");
         info("Load Environment Variables...");
-        info("Package: "+pack);
+        info("Package: "+pack[0]);
         info("Directory: "+workPath.toAbsolutePath().toString());
         loadClasses();
         if(core != null)
@@ -92,7 +98,7 @@ public class Shell
     private void loadClass(String name)
     {
         try {
-            interp.exec("from "+pack + " import "+ name);
+            interp.exec("from "+pack[0] + " import "+ name);
             info("class "+name+" done.");
         } catch (Exception e) {
             info("class "+name+" failed! "+e);

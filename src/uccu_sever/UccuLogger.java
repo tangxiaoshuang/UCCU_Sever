@@ -139,7 +139,7 @@ public class UccuLogger
             synchronized(filename)
             {
                 logfile.write(tmp);
-                logfile.force(true);
+                //logfile.force(true);
             }
             //logfile.close();
         } catch (IOException ex) {

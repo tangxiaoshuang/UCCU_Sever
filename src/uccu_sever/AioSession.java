@@ -45,7 +45,7 @@ public class AioSession {
     
     public AioSession(AsynchronousSocketChannel sockChannel, Decoder dec, Reaper rpr, CompletionHandler readHandler, 
                         CompletionHandler writeHandler) {
-        readBuffer = ByteBuffer.allocate(128);
+        readBuffer = ByteBuffer.allocate(2048);
         socketChannel = sockChannel;
         readCompletionHandler = readHandler;
         writeCompletionHandler = writeHandler;

@@ -7,8 +7,6 @@ package Entities;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import uccu_sever.UccuException;
 import uccu_sever.UccuLogger;
 
@@ -64,6 +62,48 @@ public class SkillScroll extends MutexObject{
             unlockRead();
         }
     }
+    public boolean hasSkill(Skill skill)
+    {
+        SkillInstance ins = new SkillInstance(skill);
+        lockRead();
+        try {
+            return skillInstances.contains(ins);
+        } finally {
+            unlockRead();
+        }
+    }
+    public boolean hasSkill(int id)
+    {
+        SkillInstance ins;
+        try {
+            ins = new SkillInstance(Managers.getSkill(id));
+        } catch (Exception e) {
+            return false;
+        }
+        lockRead();
+        try {
+            return skillInstances.contains(ins);
+        } finally {
+            unlockRead();
+        }
+    }
+    
+    public boolean hasSkill(String name)
+    {
+        SkillInstance ins;
+        try {
+            ins = new SkillInstance(Managers.getSkill(name));
+        } catch (Exception e) {
+            return false;
+        }
+        lockRead();
+        try {
+            return skillInstances.contains(ins);
+        } finally {
+            unlockRead();
+        }
+    }
+    
     public void pack(ByteBuffer bf)//BUG在此
     {
         lockRead();
@@ -74,6 +114,28 @@ public class SkillScroll extends MutexObject{
             int data = -1;
             try {
                 data = skillInstances.get(i).getSkillId();
+            } catch (Exception ex) {
+                UccuLogger.warn("SkillScroll/Pack", ex.toString());
+            }
+            bf.putInt(data);
+            data = skillInstances.get(i).exp;
+            data <<= 7;
+            data |= skillInstances.get(i).level;
+            bf.putInt(data);
+        }
+        unlockRead();
+    }
+    public void packToClient(ByteBuffer bf)//BUG在此
+    {
+        lockRead();
+        size = skillInstances.size();
+        bf.putInt(size);
+        for(int i = 0; i < size; ++i)
+        {
+            bf.putInt(skillInstances.get(i).id);//InstanceID
+            int data = -1;
+            try {
+                data = skillInstances.get(i).getSkillId();//SkillID
             } catch (Exception ex) {
                 UccuLogger.warn("SkillScroll/Pack", ex.toString());
             }

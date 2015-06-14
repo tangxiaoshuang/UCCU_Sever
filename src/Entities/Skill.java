@@ -91,9 +91,30 @@ public class Skill extends Entity{
         }
     }
     
-    
+    public void cast(SkillInstance skillins, Character player, KvPair a1, KvPair a2)
+    {
+        lockRead();
+        skillLogic.lockRead();
+        skillLogic.cast(skillins, player, a1, a2);
+        skillLogic.unlockRead();
+        unlockRead();
+    }
+            
     public static boolean isSkill(int id)
     {
         return id >= segment;
     }
+    public boolean hasTag(String name)
+    {
+        lockRead();
+        tags.lockRead();
+        
+        try {
+            return tags.has(name);
+        } finally {
+            tags.unlockRead();
+            unlockRead();
+        }
+    }
+    
 }

@@ -18,10 +18,10 @@ class Const
     static int[] gatePort;
     static String gameServerAddress;
     static int gameServerPort;
-    static String DBAddress = "115.27.35.227";
+    static String DBAddress = "162.105.37.188";
     static int DBPort = 55847;
     static String LoginAddress = "115.27.34.171";
-    static int LoginPort = 8798;
+    static int LoginPort = 50277;
     
     
     
@@ -46,5 +46,14 @@ public class BasicLib {
             return null;
         }
         return sb.toString();
+    }
+    public static double getDistance(int sx, int sy, int tx, int ty)
+    {
+        double res = (double)(sx-tx)*(double)(sx-tx) + (double)(sy-ty)*(double)(sy-ty);
+        return Math.sqrt(res);
+    }
+    public static void movePoint(int sx, int sy, int tx, int ty, int d)
+    {
+        
     }
 }

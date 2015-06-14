@@ -124,4 +124,24 @@ public class Inventory extends MutexObject{
         }
         unlockRead();
     }
+    public void packToClient(ByteBuffer bf)//BUG在此
+    {
+        lockRead();
+        bf.putInt(size);
+        for(int i = 0; i < size; ++i)
+        {
+            int data;
+            bf.putInt(itemInstances.get(i).id);//InstanceID
+            try {
+                data = itemInstances.get(i).getItemId();//ItemID
+            } catch (Exception ex) {
+                UccuLogger.warn("Inventory/PackToClient", ex.toString());
+                data = -1;
+            }
+            data <<= 7;
+            data |= itemInstances.get(i).quantity;
+            bf.putInt(data);
+        }
+        unlockRead();
+    }
 }

@@ -27,8 +27,23 @@ public class SkillInstanceManager extends MutexValueManager<Integer, SkillInstan
         try {
             Integer id = idleID.poll();
             if(id == null)
-                id = maxID;
+                id = maxID++;
             Skill skill = Managers.getSkill(skillId);
+            SkillInstance skillIns = new SkillInstance(id, skill, level, exp);
+            this.add(skillIns);
+            return skillIns;
+        } finally {
+            unlockWrite();
+        }
+    }
+    public SkillInstance newSkillInstance(String name, int level, int exp) throws Exception
+    {
+        lockWrite();
+        try {
+            Integer id = idleID.poll();
+            if(id == null)
+                id = maxID++;
+            Skill skill = Managers.getSkill(name);
             SkillInstance skillIns = new SkillInstance(id, skill, level, exp);
             this.add(skillIns);
             return skillIns;

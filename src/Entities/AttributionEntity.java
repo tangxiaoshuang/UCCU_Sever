@@ -16,45 +16,54 @@ public class AttributionEntity extends Entity{
     public int level;//可以压缩到Byte
     public int gender;//可以压缩到Byte
     
-    public int hp;
-    public int mp;
+    public int life;
+    public int curLife;
+    public int mana;
+    public int curMana;
     public int atk;
-    public int def;
+    public int armor;
     public int exp;
     public int moveSpeed;
     
     public int posX;
     public int posY;
+    public int feature;
     
     public AttributionEntity(int id, String name, String description,
             int level, int gender, 
-            int hp, int mp, int atk, int def, int exp, int movespeed,
-            int posX, int posY) {
+            int life, int curLife, int mana, int curMana, int atk, int def, int exp, int movespeed,
+            int posX, int posY, int feature) {
         super(id, name, description);
         this.level = level;
         this.gender = gender;
-        this.hp = hp;
-        this.mp = mp;
+        this.life = life;
+        this.curLife = curLife;
+        this.mana = mana;
+        this.curMana = curMana;
         this.atk = atk;
-        this.def = def;
+        this.armor = def;
         this.exp = exp;
         this.moveSpeed = movespeed;
         this.posX = posX;
         this.posY = posY;
+        this.feature = feature;
     }
 
     public AttributionEntity(ByteBuffer bf) {
         super(bf);
         this.level = bf.getInt();
         this.gender = bf.getInt();
-        this.hp = bf.getInt();
-        this.mp = bf.getInt();
+        this.life = bf.getInt();
+        this.curLife = bf.getInt();
+        this.mana = bf.getInt();
+        this.curMana = bf.getInt();
         this.atk = bf.getInt();
-        this.def = bf.getInt();
+        this.armor = bf.getInt();
         this.exp = bf.getInt();
         this.moveSpeed = bf.getInt();
         this.posX = bf.getInt();
         this.posY = bf.getInt();
+        this.feature = bf.getInt();
     }
     @Override
     public void pack(ByteBuffer bf)
@@ -63,14 +72,17 @@ public class AttributionEntity extends Entity{
         super.pack(bf);
         bf.put((byte)level);
         bf.put((byte)gender);
-        bf.putInt(hp);
-        bf.putInt(mp);
+        bf.putInt(life);
+        bf.putInt(curLife);
+        bf.putInt(mana);
+        bf.putInt(curMana);
         bf.putInt(atk);
-        bf.putInt(def);
+        bf.putInt(armor);
         bf.putInt(exp);
         bf.putInt(moveSpeed);
         bf.putInt(posX);
         bf.putInt(posY);
+        bf.putInt(feature);
         unlockRead();
     }
     
