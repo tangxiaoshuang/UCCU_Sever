@@ -123,4 +123,18 @@ public class Item extends Entity{
             unlockRead();
         }
     }
+    public Object getData(String name)
+    {
+        lockRead();
+        try {
+            return dataBank.getData(name);
+        }catch(Exception e)
+        {
+            UccuLogger.warn("Item/GetData", e.toString());
+            return null;
+        }
+        finally {
+            unlockRead();
+        }
+    }
 }

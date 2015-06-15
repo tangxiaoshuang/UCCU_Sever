@@ -66,4 +66,9 @@ public class DataBank extends MutexValueManager<String, DataItem>{//灵活地储
             }
         }
     }
+    public Object getData(String name) throws Exception
+    {
+        DataItem dataItem = this.get(name);
+        return dataItem.data;
+    }
 }

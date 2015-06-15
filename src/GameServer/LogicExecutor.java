@@ -133,7 +133,11 @@ public class LogicExecutor implements Runnable{
                     if(!cha.hasSkill("攻击"))
                         cha.addSkill("攻击", 1, 0);
                     
+                    if(!cha.hasItem("小型修复水晶"))
+                        cha.addItem("小型修复水晶", 5);
+                    
                     cha.gate = gate;//保存所在Gate
+                    cha.online = true;
                     
                     UccuLogger.debug("LogicExecutor/Run", "Send character("+id+") data to gate.");
                 }
@@ -332,36 +336,58 @@ public class LogicExecutor implements Runnable{
                 ItemInstance itemIns = null;
                 Character chaA = null;
                 Character chaB = null;
+                String itemName = "NULL";
                 try {
                     itemIns = Managers.getItemInstance(itemInsId);
+                    if(itemIns != null)
+                        itemName = itemIns.getName();
                     chaA = Managers.getCharacter(chaId1);
                     if(chaId2 != -1)
                         chaB = Managers.getCharacter(chaId2);
                     else
                         chaB = chaA;
                 } catch (Exception e) {
-                    UccuLogger.warn("LogicExecutor/Run", e.toString());
+                    if(itemIns != null)
+                        UccuLogger.warn("LogicExecutor/Run", e.toString());
                 }
+                
+                if( itemIns == null ||!chaA.hasItemIns(itemIns))
+                {
+                    UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" DON'T HAVE ItemIns "+itemName + "( id="+itemInsId+" )");
+                    //玩家没有该物品实例
+                    //发送无物品数据包
+                    break;
+                }
+                if(!chaA.cdCompleted(itemName))
+                {
+                    UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" CAN'T USE ItemIns "+itemName + "( id="+itemInsId+" ) NOT COLDDOWN");
+                    //玩家没有该物品实例
+                    //发送无物品数据包
+                    break;
+                }
+                
                 
                 if(optype == 0)
-                    itemIns.trigger(chaA, chaB, null);
-                //处理丢弃
+                {
+                    itemIns.lockWrite();
+                    try {
+                        itemIns.trigger(chaA, chaB, null);
+                        UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" use item "+itemName+" ( n:"+itemIns.quantity+" ) *player2 "+chaId2);
+                        chaA.checkItemIns(itemIns);
+                    } catch (Exception e) {
+                        UccuLogger.warn("LogicExecutor/Run", "Item "+itemName+ "( "+itemInsId+" )  use error! "+e);
+                        e.printStackTrace();
+                    }finally{
+                        itemIns.unlockWrite();
+                    }
+                }
                 
-                if(itemIns.hasTag("attr1"))
-                {
-                    msg.putInt(chaId1);
-                    chaA.pack(msg);
-                    session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
-                    UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId1+ " attr!");
-                    msg.clear();
-                }
-                if(itemIns.hasTag("attr2"))
-                {
-                    msg.putInt(chaId2);
-                    chaA.pack(msg);
-                    session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
-                    UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId2+ " attr!");
-                }
+                //发送背包信息
+                msg.putInt(sessionID);
+                chaA.packInventoryToClient(msg);
+                msg.flip();
+                session.write(Datagram.wrap(msg, Target.Gate, 0x19));
+                msg.clear();
                 
                 break;
             }
@@ -407,28 +433,33 @@ public class LogicExecutor implements Runnable{
                 
                 if(optype == 0)
                 {
-                    skillIns.cast(chaA, chaB, null);
-                    UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" cast skill "+skillName+ " to player "+chaId2);
+                    try {
+                        skillIns.cast(chaA, chaB, null);
+                        UccuLogger.debug("LogicExecutor/Run", "Player "+chaId1+" cast skill "+skillName+ " to player "+chaId2);
+                    } catch (Exception e) {
+                        UccuLogger.warn("LogicExecutor/Run", "Skill "+skillName+ " cast error! "+e);
+                        e.printStackTrace();
+                    }
                 }
                 //处理丢弃
-                if(skillIns.hasTag("attr1"))
-                {
-                    UccuLogger.debug("LogicExecutor/Run", "Skill "+skillName+ " has attr1 !");
-                    //msg.putInt(chaId1);
-                    chaA.pack(msg);
-                    session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
-                    UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId1+ " attr!");
-                    msg.clear();
-                }
-                if(skillIns.hasTag("attr2"))
-                {
-                    UccuLogger.debug("LogicExecutor/Run", "Skill "+skillName+ " has attr2 !");
-                    //msg.putInt(chaId2);
-                    chaB.pack(msg);
-                    session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
-                    UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId2+ " attr!");
-                    msg.clear();
-                }
+//                if(skillIns.hasTag("attr1"))
+//                {
+//                    UccuLogger.debug("LogicExecutor/Run", "Skill "+skillName+ " has attr1 !");
+//                    //msg.putInt(chaId1);
+//                    chaA.pack(msg);
+//                    session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
+//                    UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId1+ " attr!");
+//                    msg.clear();
+//                }
+//                if(skillIns.hasTag("attr2"))
+//                {
+//                    UccuLogger.debug("LogicExecutor/Run", "Skill "+skillName+ " has attr2 !");
+//                    //msg.putInt(chaId2);
+//                    chaB.pack(msg);
+//                    session.write(Datagram.wrap(msg, Target.Gate, 0x1C));
+//                    UccuLogger.debug("LogicExecutor/Run", "Update Player "+chaId2+ " attr!");
+//                    msg.clear();
+//                }
                 //发送更新包在脚本中执行
                 
                 break;

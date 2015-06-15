@@ -116,5 +116,18 @@ public class Skill extends Entity{
             unlockRead();
         }
     }
-    
+    public Object getData(String name)
+    {
+        lockRead();
+        try {
+            return dataBank.get(name);
+        }catch(Exception e)
+        {
+            UccuLogger.warn("Skill/GetData", e.toString());
+            return null;
+        }
+        finally {
+            unlockRead();
+        }
+    }
 }

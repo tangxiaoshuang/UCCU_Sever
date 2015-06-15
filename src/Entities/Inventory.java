@@ -46,7 +46,7 @@ public class Inventory extends MutexObject{
         for(int i = 0; i < this.size; ++i)
         {
             int data = bf.getInt();
-            int quantity = data & 0x1111111;
+            int quantity = data & 0x7f;
             int id = data >> 7;
             try {
                 itemInstances.add(Managers.newItemInstance(id, quantity));
@@ -115,6 +115,62 @@ public class Inventory extends MutexObject{
             unlockWrite();
         }
     }
+    public boolean has(ItemInstance itemIns)
+    {
+        lockRead();
+        try {
+            return itemInstances.contains(itemIns);
+        } finally {
+            unlockRead();
+        }
+    }
+    public boolean has(String name)
+    {
+        ItemInstance ins;
+        try {
+            ins = new ItemInstance(Managers.getItem(name));
+        } catch (Exception e) {
+            return false;
+        }
+        lockRead();
+        try {
+            return itemInstances.contains(ins);
+        } finally {
+            unlockRead();
+        }
+    }
+    
+    public boolean has(int id)
+    {
+        ItemInstance ins;
+        try {
+            ins = new ItemInstance(Managers.getItem(id));
+        } catch (Exception e) {
+            return false;
+        }
+        lockRead();
+        try {
+            return itemInstances.contains(ins);
+        } finally {
+            unlockRead();
+        }
+    }
+    
+    public void check(ItemInstance itemIns)
+    {
+        lockWrite();
+        try {
+            int idx = itemInstances.indexOf(itemIns);
+            if(idx == -1 || itemIns.quantity > 0)
+                return;
+            itemInstances.set(idx, ItemInstance.empty);
+            //物品消耗完，删除
+            Managers.removeItemInstance(itemIns);
+        } finally {
+            unlockWrite();
+        }
+    }
+    
     public void pack(ByteBuffer bf)//BUG在此
     {
         lockRead();
@@ -129,7 +185,7 @@ public class Inventory extends MutexObject{
                 data = -1;
             }
             data <<= 7;
-            data |= itemInstances.get(i).quantity;
+            data |= (itemInstances.get(i).quantity & 0x7f);
             bf.putInt(data);
         }
         unlockRead();

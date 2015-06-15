@@ -86,9 +86,18 @@ public class Managers {
     {
         return itemInstanceManager.newItemInstance(itemId, quantity);
     }
+    public static ItemInstance newItemInstance(String name, int quantity) throws Exception
+    {
+        return itemInstanceManager.newItemInstance(name, quantity);
+    }
+    
     public static ItemInstance getItemInstance(int id) throws Exception
     {
         return itemInstanceManager.get(id);
+    }
+    public static void removeItemInstance(ItemInstance itemIns)
+    {
+        itemInstanceManager.remove(itemIns);
     }
     
     public static SkillInstance newSkillInstance(int skillId, int level, int exp) throws Exception

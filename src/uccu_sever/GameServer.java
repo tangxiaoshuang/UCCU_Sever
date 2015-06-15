@@ -112,8 +112,9 @@ public class GameServer implements Decoder, Register, Reaper{
         @Override
         public void decode(ByteBuffer buffer, AioSession session)
         {
+            ByteBuffer msg = ByteBuffer.allocate(2048);
             while (true) {
-                ByteBuffer msg = ByteBuffer.allocate(2048);
+                msg.clear();
                 ByteBuffer datagram = Datagram.getDatagram(buffer);
                 if(datagram == null)
                     return;
@@ -138,6 +139,7 @@ public class GameServer implements Decoder, Register, Reaper{
                         Character cha = Managers.newCharacter(datagram);
                         
                         cha.gate = Managers.getGate(gateID);
+                        cha.online = true;
                         
                         datagram.position(4);
                         datagram.compact();
@@ -178,6 +180,9 @@ public class GameServer implements Decoder, Register, Reaper{
                         if(datagram.getInt(datagram.position()) == 0)//新玩家初次进入游戏
                             cha.dirty = true;
                         cha.loadInventory(datagram);
+                        
+                        if(!cha.hasItem("小型修复水晶"))
+                            cha.addItem("小型修复水晶", 5);
                         
                         msg.putInt(sessionID);
                         cha.packInventoryToClient(msg);

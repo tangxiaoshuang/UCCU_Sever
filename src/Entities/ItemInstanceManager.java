@@ -36,5 +36,31 @@ public class ItemInstanceManager extends MutexValueManager<Integer, ItemInstance
             unlockWrite();
         }
     }
+    public ItemInstance newItemInstance(String name, int quantity) throws Exception
+    {
+        lockWrite();
+        try {
+            Integer id = idleID.poll();
+            if(id == null)
+                id = maxID++;
+            Item item = Managers.getItem(name);
+            ItemInstance itemIns = new ItemInstance(id, item, quantity);
+            this.add(itemIns);
+            return itemIns;
+        } finally {
+            unlockWrite();
+        }
+    }
+    
+    public void remove(ItemInstance itemIns)
+    {
+        lockWrite();
+        try {
+            super.remove(itemIns);
+            idleID.add(itemIns.id);
+        } finally {
+            unlockWrite();
+        }
+    }
 }
         

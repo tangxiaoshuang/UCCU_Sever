@@ -15,10 +15,10 @@ public class ItemInstance extends MutexValue<Integer>{
     public static ItemInstance empty = new ItemInstance(-1, Item.empty, 0);
     
     
-    int id;
-    Item item;
-    int quantity;
-    int equipType;
+    public int id;
+    public Item item;
+    public int quantity;
+    public int equipType;
     public ItemInstance() {//构造空实例
         this(-1, Item.empty,0);
     }
@@ -28,6 +28,12 @@ public class ItemInstance extends MutexValue<Integer>{
         this.item = item;
         this.quantity = quantity;
     }
+    
+    public ItemInstance(Item item)
+    {
+        this(-1, item, 0);
+    }
+    
     public int getItemId() throws Exception
     {
         return item.id;
@@ -56,8 +62,10 @@ public class ItemInstance extends MutexValue<Integer>{
     @Override
     public boolean equals(Object obj)
     {
-        ItemInstance itemObj = (ItemInstance)obj;
-        return obj == null ? false : this.item == itemObj.item;
+        return obj == null ? false : this.item == ((ItemInstance)obj).item;
     }
-    
+    public Object getData(String name)
+    {
+        return item.getData(name);
+    }
 }

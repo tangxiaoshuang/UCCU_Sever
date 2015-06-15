@@ -18,7 +18,7 @@ class Const
     static int[] gatePort;
     static String gameServerAddress;
     static int gameServerPort;
-    static String DBAddress = "192.168.1.102";
+    static String DBAddress = "192.168.1.103";
     static int DBPort = 55847;
     static String LoginAddress = "115.27.34.171";
     static int LoginPort = 50277;

@@ -67,4 +67,15 @@ public class MutexValueManager<T, T2> extends MutexObject{
             unlockWrite();
         }
     }
+    public void remove(MutexValue<T> obj)
+    {
+        lockWrite();
+        try {
+            if(!this.has(obj.name))
+                return;
+            name2obj.remove(obj.name);
+        } finally {
+            unlockWrite();
+        }
+    }
 }

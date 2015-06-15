@@ -146,6 +146,17 @@ public class Character extends AttributionEntity{
         unlockWrite();
     }
     
+    public void startCd(ItemInstance itemIns)
+    {
+        lockWrite();
+        try {
+            cdManager.start(itemIns.getName());
+            this.dirty = true;
+        } catch (Exception e) {
+            UccuLogger.warn("Character/StartCd", e.toString());
+        }
+        unlockWrite();
+    }
     
     public boolean hasSkill(int id)
     {
@@ -154,6 +165,26 @@ public class Character extends AttributionEntity{
     public boolean hasSkill(String name)
     {
         return skillScroll.hasSkill(name);
+    }
+    
+    public boolean hasItemIns(ItemInstance itemIns)
+    {
+        return inventory.has(itemIns);
+    }
+    
+    public boolean hasItem(String name)
+    {
+        return inventory.has(name);
+    }
+    
+    public boolean hasItem(int id)
+    {
+        return inventory.has(id);
+    }
+    
+    public void checkItemIns(ItemInstance itemIns)
+    {
+        inventory.check(itemIns);
     }
     
     public void addSkill(int id, int level, int exp)
@@ -177,9 +208,25 @@ public class Character extends AttributionEntity{
             this.dirty = true;
         } catch (Exception ex) {
             UccuLogger.warn("Character/AddSkill", ex.toString());
+            ex.printStackTrace();
         }
         finally{
             unlockWrite();
         }
     }
+    public void addItem(String name, int quantity)
+    {
+        lockWrite();
+        try {
+            inventory.add(Managers.newItemInstance(name, quantity));
+            this.dirty = true;
+        } catch (Exception e) {
+            UccuLogger.warn("Character/AddItem", e.toString());
+            e.printStackTrace();
+        }
+        finally{
+            unlockWrite();
+        }
+    }
+    
 }
